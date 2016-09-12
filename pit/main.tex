@@ -1,0 +1,39 @@
+\documentclass[12pt,a4paper,oneside]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[russian,english]{babel}
+\usepackage[T2A]{fontenc}
+\usepackage{hyperref}
+\usepackage[final]{listings}
+\usepackage{subcaption}
+\usepackage{breakurl}
+\usepackage{cite}
+\usepackage{perpage}
+\usepackage{graphicx}
+
+\graphicspath{{img/}}
+
+\def\UrlBreaks{\do\/\do-}
+
+\lstset{
+  frame=single,
+  breaklines=true,
+  basicstyle=\small,
+  postbreak=\raisebox{0ex}{\ensuremath{\hookrightarrow\space}},
+  numbers=left
+}
+
+\MakePerPage{footnote}
+
+\title{Programmable Interval Timer}
+\author{Me}
+\date{\today}
+
+\begin{document}
+  \sloppy
+  \maketitle
+  \tableofcontents
+  \clearpage
+
+  \input{pit}
+\end{document}
