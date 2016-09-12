@@ -18,7 +18,7 @@ S_OBJECTS := $(S_SOURCES:.S=.o)
 S_DEPS := $(S_SOURCES:.S=.d)
 
 OBJ := $(C_OBJECTS) $(S_OBJECTS)
-DEP := $(C_DESP) $(S_DEPS)
+DEP := $(C_DEPS) $(S_DEPS)
 
 all: kernel
 
