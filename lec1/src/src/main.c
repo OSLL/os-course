@@ -8,6 +8,7 @@ static void qemu_gdb_hang(void)
 }
 
 #include <desc.h>
+#include <ints.h>
 
 void main(void)
 {
