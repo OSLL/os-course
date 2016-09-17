@@ -119,10 +119,11 @@
 \end{center}
 \begin{itemize}
   \item \emph{offset} - адрес обработчика;
-  \item \emph{segment selector} - селектор (регистр CS);
-  \item \emph{P} (Present) - должен быть равен 1;
-  \item \emph{type} - домашнее задание разобраться в разнице между Interrup
-  Gate и Trap Gate;
+  \item \emph{segment selector} (биты [31:16] в 1-ом слове) - селектор (регистр
+  CS);
+  \item \emph{P} (Present, бит 15 во 2-ом слове) - должен быть равен 1;
+  \item \emph{type} (биты [11:8] во 2-ом слова) - домашнее задание разобраться
+  в разнице между Interrup Gate и Trap Gate;
   \item все остальное должно быть равно 0.
 \end{itemize}
 \end{frame}
