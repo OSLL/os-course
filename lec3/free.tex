@@ -1,0 +1,23 @@
+\begin{frame}
+\frametitle{Информация о доступной памяти}
+\begin{itemize}
+  \item До сих пор мы знали границы памяти, из которой мы удовлетовряем запросы
+  на алокацию
+  \begin{itemize}
+    \item откуда берется это знание?
+  \end{itemize}
+  \item Для ядра ОС:
+  \begin{itemize}
+    \item из спецификации оборудования;
+    \item от загрузчика/BIOS/UEFI или любого другого ПО, которое запускает ОС;
+    \item например, multiboot загрузчик может предоставить карту памяти;
+  \end{itemize}
+  \item для обычных приложений:
+  \begin{itemize}
+    \item через интерфейс ОС;
+    \item не редко ОС позволяет уменьшить/расширить границы памяти;
+    \item например, в Unix-like системах есть вызовы \emph{brk}/\emph{sbrk},
+    а так же \emph{mmap}/\emph{munmap}.
+  \end{itemize}
+\end{itemize}
+\end{frame}
