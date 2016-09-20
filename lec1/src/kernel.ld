@@ -18,7 +18,7 @@ SECTIONS
 
 	data_phys_begin = . - VIRTUAL_BASE;
 	.rodata : { *(.rodata) *(.rodata.*) }
-	.data : { *(.data) *(.data.*) }
+	.data : { *(.data) *(.data.*) *(.got) *(.got.*) }
 	data_phys_end = . - VIRTUAL_BASE;
 	. = ALIGN(PAGE_SIZE);
 
