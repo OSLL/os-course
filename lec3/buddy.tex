@@ -37,8 +37,8 @@
 \begin{frame}
 \frametitle{Buddy Allocator}
 \begin{itemize}
-  \item Будем алоцировать блоки не просто кратные \emph{PAGE\_SIZE}, а кратные
-  $2^i \times PAGE\_SIZE$:
+  \item Будем алоцировать блоки не просто кратные \emph{PAGE\_SIZE}, а блоки
+  размера $2^i \times PAGE\_SIZE$:
   \begin{itemize}
     \item не смотря на ограничение, алгоритм очень практичный и широко
     применяется;
