@@ -1,0 +1,212 @@
+\begin{frame}
+\frametitle{Защита памяти}
+\begin{itemize}
+  \item От кого/чего нужно защищать память?
+  \begin{itemize}
+    \item память можно защищать от чтения/записи/исполнения;
+    \item память можно защищать от непривилегированного кода;
+    \item память одних приложений можно защищать от действий других.
+  \end{itemize}
+  \item Зачем защищать память?
+  \begin{itemize}
+    \item защита от непривилегированного кода защищает память ядра ОС от
+    действий пользовательских приложений - ошибка в приложении не должна
+    приводить к проблемам в ядре;
+    \item ошибка в одном приложении не должна вприводить к проблемам в другом.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Средства защиты памяти}
+\begin{itemize}
+  \item Сегментация
+  \begin{itemize}
+    \item сейчас не особо применяется для защиты памяти;
+    \item полезно рассмотреть для домашнего задания.
+  \end{itemize}
+  \item Paging
+  \begin{itemize}
+    \item используется для организации трансляции адресов - дает уровень
+    косвенности при работе с памятью;
+    \item позволяет защищать память на уровне отдельно взятых "страниц";
+    \item является основным инструментом для защиты памяти сейчас;
+    \item на x86 используется "совместно" с сегментацией.
+  \end{itemize}
+  \item Другие архитектурно зависимые средства...
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Сегментация на примере x86}
+\framesubtitle{Сегментные регистры}
+\begin{itemize}
+  \item В x86 при любом обращении к памяти явно или неявно используется один из
+  сегментых регистров:
+  \begin{itemize}
+    \item DS, ES, CS, SS, FS, GS.
+  \end{itemize}
+  \item Если регистр не указан явно, то регистр выбирается в зависимости от
+  операции:
+  \begin{itemize}
+    \item для обычных чтения и записи данных используются DS или ES;
+    \item для операций работы со стеком (push, pop и др.) используется SS;
+    \item для чтения следующей инструкции из памяти используется CS;
+    \item FS и GS... Ну это отдельная история...
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Сегментация на примере x86}
+\framesubtitle{Селектор сегмента}
+\begin{center}
+  \includegraphics[width=0.4\linewidth]{rpl.png}
+  \includegraphics[width=0.4\linewidth]{cpl.png}
+\end{center}
+\begin{itemize}
+  \item Сегментный регистр хранит 16-битное значение - селектор сегмента:
+  \begin{itemize}
+    \item RPL - Requested Priviledge Level (DS, ES, FS, GS, SS);
+    \item CPL - Current Priviledge Level (CS);
+    \item TI - Table Indicator (0 - GDT, 1 - LDT);
+    \item Index - индекс записи в таблице (GDT или LDT, в зависимости от TI).
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Сегментация на примере x86}
+\framesubtitle{Уровни привилегий 1/2}
+\begin{center}
+  \includegraphics[width=0.3\linewidth]{priv.png}
+\end{center}
+\begin{itemize}
+  \item В x86 есть 4 уровня привелегий (aka ring0 - ring3):
+  \begin{itemize}
+    \item 0-ой - наивысший уровень привилегий, на этом уровне можно выполнять
+    любые инструкции и обращаться к любой памяти;
+    \item 3-ий - низший уровень, на этом уровне некоторые инструкции не
+    доступны, и доступ к памяти может быть ограничен.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Сегментация на примере x86}
+\framesubtitle{Уровни привилегий 2/2}
+\begin{itemize}
+  \item На уровне 0, \emph{обычно}, работает ядро ОС:
+  \begin{itemize}
+    \item ядро ОС должно иметь полный контроль над системой;
+    \item два младших бита в CS у ядра ОС, обычно, равны 0;
+  \end{itemize}
+  \item на уровне 3, \emph{обычно}, работают пользовательские приложения:
+  \begin{itemize}
+    \item редакторы текста, браузеры, компиляторы и прочее;
+    \item в том числе и QEMU (если оставить в стороне KVM);
+    \item два младших бита в CS у приложений, обычно, равны 3;
+  \end{itemize}
+  \item уровни 1 и 2 используются редко и в очень специфичных приложениях.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Сегментация на примере x86}
+\framesubtitle{Сегментные дескрипторы}
+\begin{itemize}
+  \item Index - индекс записи в GDT и LDT:
+  \begin{itemize}
+    \item в обоих таблица записи имеют одинаковый формат и значение, т. ч. для
+    нас между ними нет разницы.
+  \end{itemize}
+  \item Смысл записей в GDT/LDT немного меняется в зависимости от режима работы
+  процессора
+  \begin{itemize}
+    \item в Real Mode нет защиты памяти;
+    \item в данном контексте нас интересуют только Protected Mode и Long Mode.
+  \end{itemize}
+  \item Дескрипторы в GDT/LDT делятся на системные и все остальные
+  \begin{itemize}
+    \item системные дескрипторы используются для специфичных нужд x86;
+    \item в данном контексте нас не интересуют системные дескрипторы.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Сегментация на примере x86}
+\framesubtitle{Сегментные дескрипторы в Protected Mode 1/2}
+\begin{center}
+  \includegraphics[width=0.6\linewidth]{gdt32.png}
+\end{center}
+\begin{itemize}
+  \item Protected Mode дескриптор содержит
+  \begin{itemize}
+    \item Base и Limit - описывают границы региона физической памяти;
+    \item DPL - Descriptor Priviledge Level;
+    \item TYPE - тип сегмента (сегмент кода/данных, разершено ли чтение/запись);
+    \item P - бит присутсивия (должен быть 1 для валидных сегментов);
+    \item G - бит гранулярности (1 - Limit в 4Kb блоках, 0 - Limit в байтах).
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Сегментация на примере x86}
+\framesubtitle{Сегментные дескрипторы в Protected Mode 2/2}
+\begin{center}
+  \includegraphics[width=0.55\linewidth]{segtr.png}
+\end{center}
+\begin{itemize}
+  \item Указатель в программе (aka логический адрес) состоит из двух частей:
+  \begin{itemize}
+    \item сегментного регистра (CS, DS, ES, SS, FS, GS);
+    \item смещения (aka эффективный адрес).
+  \end{itemize}
+  \item Логический адрес пробразуется в линейный адрес
+  \begin{itemize}
+    \item при преобразовании проверяется, что эффективный адрес не больше Limit.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Сегментация на примере x86}
+\framesubtitle{Сегментные дескрипторы в Long Mode}
+\begin{center}
+  \includegraphics[width=0.6\linewidth]{gdt64.png}
+\end{center}
+\begin{itemize}
+  \item Long Mode дескриптор содержит почти то же самое что и в Protected Mode
+  \begin{itemize}
+    \item Base и Limit потеряли свой смысл, т. е. трансляция логического адреса
+    в линейный не выполняется и границы сегмента не проверяются;
+    \item кроме того нельзя ограничить память, описываемую сегментным
+    дескриптором, т. е. сегментация как самостоятельный способ защиты теряет
+    свой смысл.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Сегментация на примере x86}
+\framesubtitle{Проверка уровня привилегий при доступе к данным}
+\begin{itemize}
+  \item При загрузке селектора в сегментный регистр (DS, ES, FS, GS) CPU
+  выполняет проверку уровня привелегий:
+  \begin{itemize}
+    \item в проверке участвуют текущий CPL, RPL в значении селектора и DPL в
+    дескрипторе сегмента, соответствующего селектору;
+    \item DPL должен быть численно больше или равен CPL и RPL, в противном
+    случае генерируется исключение;
+    \item ОС задает селекторы приложения, и приложение очень ограничено в их
+    изменении.
+  \end{itemize}
+  \item Для сегмента стека SS проверка немного другая:
+  \begin{itemize}
+    \item RPL и CPL должны совпадать с DPL;
+    \item на практике для данных и стека часто используют один дескриптор.
+  \end{itemize}
+\end{itemize}
+\end{frame}
