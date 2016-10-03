@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="170mm"
+   height="65mm"
+   viewBox="0 0 602.36221 230.31497"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="rr4.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="372.88236"
+     inkscape:cy="466.31272"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:snap-global="true"
+     inkscape:snap-bbox="true"
+     inkscape:bbox-nodes="true"
+     inkscape:window-width="1855"
+     inkscape:window-height="1056"
+     inkscape:window-x="65"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid4136" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-822.04724)">
+    <rect
+       style="fill:none;fill-opacity:0.19607843;stroke:#0000ff;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4138"
+       width="120"
+       height="90"
+       x="20.5"
+       y="842.86218" />
+    <rect
+       style="fill:#0000ff;fill-opacity:1;stroke:#0000ff;stroke-width:1.19615054;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4140"
+       width="28.80385"
+       height="29.80385"
+       x="41.098076"
+       y="892.46027" />
+    <rect
+       style="fill:#00ff00;fill-opacity:1;stroke:#0000ff;stroke-width:1.21592963;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4142"
+       width="29.784071"
+       height="29.784071"
+       x="91.107964"
+       y="892.47015" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:12.5px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="81.062988"
+       y="862.35925"
+       id="text4144"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4146"
+         x="81.062988"
+         y="862.35925">IO Bounded</tspan><tspan
+         sodipodi:role="line"
+         x="81.062988"
+         y="877.98425"
+         id="tspan4148">Threads</tspan></text>
+    <rect
+       style="fill:none;fill-opacity:0.19607843;stroke:#ff0000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4138-3"
+       width="120"
+       height="90"
+       x="21"
+       y="953.36218" />
+    <rect
+       style="fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4167"
+       width="30"
+       height="30"
+       x="40.5"
+       y="1002.8622" />
+    <rect
+       style="fill:#ffff00;fill-opacity:1;stroke:#ff0000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4169"
+       width="30"
+       height="30"
+       x="90.5"
+       y="1002.8622" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:12.5px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="81.105957"
+       y="977.06018"
+       id="text4171"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4173"
+         x="81.105957"
+         y="977.06018">CPU Bounded</tspan><tspan
+         sodipodi:role="line"
+         x="81.105957"
+         y="992.68518"
+         id="tspan4175">Threads</tspan></text>
+    <rect
+       style="fill:none;fill-opacity:1;stroke:#0000ff;stroke-width:0.8299039;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4192"
+       width="199.17009"
+       height="60.170097"
+       x="160.91495"
+       y="873.27716" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:12.5px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="259.39648"
+       y="892.35925"
+       id="text4194"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4196"
+         x="259.39648"
+         y="892.35925">Active Threads Queue</tspan></text>
+    <rect
+       style="fill:#0000ff;fill-opacity:1;stroke:#0000ff;stroke-width:0.56678981;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4140-7"
+       width="9.433198"
+       height="20.433197"
+       x="370.28342"
+       y="982.64557" />
+    <rect
+       style="fill:#00ff00;fill-opacity:1;stroke:#0000ff;stroke-width:0.56679052;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4142-5"
+       width="9.4332094"
+       height="20.433226"
+       x="380.28339"
+       y="982.64557" />
+    <rect
+       style="fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-width:0.82253343;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4167-3"
+       width="30.177467"
+       height="20.177475"
+       x="270.41125"
+       y="902.7735" />
+    <rect
+       style="fill:#ffff00;fill-opacity:1;stroke:#ff0000;stroke-width:0.8025744;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4169-5"
+       width="30.197426"
+       height="19.197433"
+       x="320.40128"
+       y="902.76349" />
+    <rect
+       style="fill:none;fill-opacity:1;stroke:#0000ff;stroke-width:0.8299039;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4192-6"
+       width="199.17009"
+       height="60.170097"
+       x="380.91495"
+       y="873.27716" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:12.5px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="478.92578"
+       y="892.35925"
+       id="text4273"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4275"
+         x="478.92578"
+         y="892.35925">Blocked Threads Set</tspan></text>
+    <rect
+       style="fill:none;fill-opacity:1;stroke:#0000ff;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4277"
+       width="420"
+       height="60"
+       x="161"
+       y="953.36218" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:12.5px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="366.99829"
+       y="971.63953"
+       id="text4365"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4367"
+         x="366.99829"
+         y="971.63953">SCHEDULE</tspan></text>
+    <rect
+       style="fill:#0000ff;fill-opacity:1;stroke:#0000ff;stroke-width:0.55333251;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4140-2"
+       width="9.4466705"
+       height="19.446651"
+       x="170.27666"
+       y="982.63885" />
+    <rect
+       style="fill:#00ff00;fill-opacity:1;stroke:#0000ff;stroke-width:0.55333221;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4142-9"
+       width="9.446661"
+       height="19.44665"
+       x="180.27667"
+       y="982.63885" />
+    <rect
+       style="fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-width:0.82253343;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4167-3-7"
+       width="30.177467"
+       height="20.177477"
+       x="190.41127"
+       y="982.7735" />
+    <rect
+       style="fill:#ffff00;fill-opacity:1;stroke:#ff0000;stroke-width:0.8025744;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4169-5-0"
+       width="30.197426"
+       height="19.197435"
+       x="220.40129"
+       y="982.76349" />
+    <rect
+       style="fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-width:0.82253343;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4167-3-9"
+       width="30.177467"
+       height="20.177477"
+       x="250.41127"
+       y="982.7735" />
+    <rect
+       style="fill:#ffff00;fill-opacity:1;stroke:#ff0000;stroke-width:0.8025744;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4169-5-3"
+       width="30.197426"
+       height="19.197435"
+       x="280.40128"
+       y="982.76349" />
+    <rect
+       style="fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-width:0.82253343;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4167-3-0"
+       width="30.177467"
+       height="20.177477"
+       x="310.41125"
+       y="982.7735" />
+    <rect
+       style="fill:#ffff00;fill-opacity:1;stroke:#ff0000;stroke-width:0.8025744;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4169-5-6"
+       width="30.197426"
+       height="19.197435"
+       x="340.40128"
+       y="982.76349" />
+    <rect
+       style="fill:#0000ff;fill-opacity:1;stroke:#0000ff;stroke-width:0.98386204;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4140-7-2"
+       width="29.016138"
+       height="20.016127"
+       x="400.49194"
+       y="902.85413" />
+    <rect
+       style="fill:#00ff00;fill-opacity:1;stroke:#0000ff;stroke-width:1.00000036;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4142-5-6"
+       width="30"
+       height="20.000017"
+       x="450.5"
+       y="902.86218" />
+  </g>
+</svg>
