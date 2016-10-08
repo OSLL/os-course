@@ -1,3 +1,5 @@
+#include <serial.h>
+
 static void qemu_gdb_hang(void)
 {
 #ifdef DEBUG
@@ -7,16 +9,12 @@ static void qemu_gdb_hang(void)
 #endif
 }
 
-#include <desc.h>
-#include <ints.h>
-
 void main(void)
 {
 	qemu_gdb_hang();
 
-	struct desc_table_ptr ptr = {0, 0};
-
-	write_idtr(&ptr);
+	serial_setup();
+	serial_write("Hello, World!\n", sizeof("Hello, World!\n"));
 
 	while (1);
 }
