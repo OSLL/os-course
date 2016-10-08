@@ -1,5 +1,6 @@
 #include <serial.h>
 #include <ints.h>
+#include <time.h>
 
 static void qemu_gdb_hang(void)
 {
@@ -16,8 +17,8 @@ void main(void)
 
 	serial_setup();
 	ints_setup();
-
-	__asm__ volatile ("int $0");
+	time_setup();
+	enable_ints();
 
 	while (1);
 }
