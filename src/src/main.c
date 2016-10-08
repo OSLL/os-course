@@ -1,4 +1,5 @@
 #include <serial.h>
+#include <ints.h>
 
 static void qemu_gdb_hang(void)
 {
@@ -14,7 +15,9 @@ void main(void)
 	qemu_gdb_hang();
 
 	serial_setup();
-	serial_write("Hello, World!\n", sizeof("Hello, World!\n"));
+	ints_setup();
+
+	__asm__ volatile ("int $0");
 
 	while (1);
 }
