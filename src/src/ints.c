@@ -2,7 +2,8 @@
 #include <i8259a.h>
 #include <memory.h>
 #include <desc.h>
-#include <serial.h>
+#include <print.h>
+#include <backtrace.h>
 
 #define IDT_PRESENT	((uint64_t)1 << 47)
 #define IDT_INT_GATE	((uint64_t)14 << 40)
@@ -32,11 +33,12 @@ static void idt_entry_setup(struct idt_entry *entry, uint16_t selector,
 	entry->high = (handler >> 32) & 0xFFFFFFFFul;
 }
 
-static void unexpected_interrupt(void)
+static void unexpected_interrupt(struct frame *frame)
 {
-	static const char msg[] = "Unexpected interrupt!\n";
-
-	serial_write(msg, sizeof(msg) - 1);
+	printf("Unexpected interrupt %d\n", (int)frame->intno);
+	printf("Backtrace Begin:\n");
+	__backtrace(frame->rbp, stack_begin(), stack_end());
+	printf("Backtrace End.\n");
 	while (1);
 }
 
@@ -45,7 +47,7 @@ static void call_error_handler(int error, struct frame *frame)
 	error_handler_t handler = error_handler[error];
 
 	if (!handler)
-		unexpected_interrupt();
+		unexpected_interrupt(frame);
 	handler(error, frame);
 }
 
@@ -54,7 +56,7 @@ static void call_irq_handler(int irq, struct frame *frame)
 	irq_handler_t handler = irq_handler[irq];
 
 	if (!handler)
-		unexpected_interrupt();
+		unexpected_interrupt(frame);
 
 	/* We can ack right away since we use Interrupt Gates and so
 	 * interrupts are disabled on CPU. */
@@ -69,7 +71,7 @@ void __int_handler(struct frame *frame)
 	else if (frame->intno < ERRORS + IRQS)
 		call_irq_handler(frame->intno - ERRORS, frame);
 	else
-		unexpected_interrupt();
+		unexpected_interrupt(frame);
 }
 
 void register_error_handler(int error, error_handler_t handler)

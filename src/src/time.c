@@ -1,7 +1,7 @@
 #include <time.h>
 #include <ints.h>
-#include <serial.h>
 #include <ioport.h>
+#include <print.h>
 
 #define PIT_CMD		0x43
 #define PIT_CH0_DATA	0x40
@@ -41,12 +41,10 @@ static void pit_set_frequency(unsigned long freq)
 
 static void pit_handler(int irq, struct frame *frame)
 {
-	static const char msg[] = "tick!\n";
-
 	(void) irq;
 	(void) frame;
 
-	serial_write(msg, sizeof(msg) - 1);
+	printf("tick!\n");
 }
 
 void time_setup(void)
