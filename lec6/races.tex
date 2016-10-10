@@ -1,0 +1,179 @@
+\begin{frame}
+\frametitle{Разделяемая память}
+\begin{itemize}
+  \item Несколько потоков могут обрабатывать общие данные
+  \begin{itemize}
+    \item не редко несколько потоков могут решить общую задачу быстрее.
+  \end{itemize}
+  \item Неатомарные чтения/обновления общих данных могут приводить к проблемам:
+  \begin{itemize}
+    \item можно получить неконсистентное состояние разделяемой памяти;
+    \item не предсказуемый результат работы.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Атомарность}
+\begin{itemize}
+  \item Операция атомарна, если она может только выполниться полностью или не
+  выполниться вовсе:
+  \begin{itemize}
+    \item либо все эффекты операции видны, либо не видны никакие;
+    \item наблюдатель не может увидеть только часть результата операции;
+    \item наблюдатель не может заметить, что операция была приостановлена.
+  \end{itemize}
+  \item Не все что выглядит как одна операция является атомарным!
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример}
+\begin{columns}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+int main() {
+    static volatile int i = 42;
+
+    ++i;
+    return 0;
+}
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+main:
+  mov 0x200c4a(%rip),%eax
+  add $0x1,%eax
+  mov %eax,0x200c41(%rip)
+  xor %eax,%eax
+  retq
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\begin{itemize}
+  \item Обычная операция инкремента транслируется в три ассемблерные инструкции:
+  \begin{itemize}
+    \item чтение, обновление (инкремент) и запись;
+    \item что если инкремент \emph{одной переменной} пытаются сделать сразу
+    несколько потоков?
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Состояние гонки по данным}
+\begin{columns}
+  \begin{column}{.3\linewidth}
+    \begin{lstlisting}
+i: .int 42
+
+thread0:
+  mov i, %eax
+  add $1, %eax
+  mov %eax, i
+  retq
+
+thread1:
+  mov i, %eax
+  add $1, %eax
+  mov %eax, i
+  retq
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.7\linewidth}
+    \begin{itemize}
+      \item thread0 и thread1 вызываются из разных потоков;
+      \item каждую инструкцию считаем атомарной;
+      \item какое значение будет в \emph{i} после завершения?
+    \end{itemize}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Хороший вариант исполнения}
+\begin{columns}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}[basicstyle=\small]
+thread0:
+  mov i, %eax
+  add $1, %eax
+  mov %eax, i
+
+
+
+  retq
+_
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}[basicstyle=\small]
+thread1:
+
+
+
+  mov i, %eax
+  add $1, %eax
+  mov %eax, i
+
+  retq 
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Плохой вариант исполнения}
+\begin{columns}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}[basicstyle=\small]
+thread0:
+  mov i, %eax
+
+  add $1, %eax
+  mov %eax, i
+
+
+  retq
+_
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}[basicstyle=\small]
+thread1:
+
+  mov i, %eax
+
+
+  add $1, %eax
+  mov %eax, i
+
+  retq 
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Состояние гонки}
+\begin{itemize}
+  \item Ситуация, когда результат работы зависит от порядка в котором
+  выполняются атомарные инструкции называется состоянием гонки
+  \begin{itemize}
+    \item состояние гонки может приводить к случайным ошибкам;
+    \item порядок, в котором атомарные инструкции разных потоков будут выполнены
+    зависит от целой кучи обстоятельств:
+    \begin{itemize}
+      \item от входных данных;
+      \item от скорости CPU;
+      \item от количества работы на CPU (от прерываний, других потоков и др.).
+    \end{itemize}
+  \end{itemize}
+  \item \emph{Пока} атомарными инструкциями для нас будут только чтение и запись
+  переменных
+  \begin{itemize}
+    \item размер переменной при этом ограничен.
+  \end{itemize}
+\end{itemize}
+\end{frame}

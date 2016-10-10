@@ -1,0 +1,661 @@
+\begin{frame}
+\frametitle{Критическая секция}
+\begin{itemize}
+  \item Участок кода, в котором происходит обращение к общим данным и для
+  которого важен порядок наложения, будем называть критической секцией
+  \begin{itemize}
+    \item чтобы избежать состояния гонки достаточно чтобы в критической секции
+    не могло находиться более одного потока одновременно;
+    \item другими словами, если критическая секция атомарна, то проблем нет.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Взаимное исключение 1/4}
+\begin{itemize}
+  \item Взаимное исключение (Mutual Exclusion, aka mutex) - примитив, который
+  позволяет оградить критическую секцию и сделать ее атомарной
+  \begin{itemize}
+    \item пара функций lock и unlock
+    \begin{itemize}
+      \item вызываем lock перед тем как войти в критическую секцию;
+      \item вызываем unlock после выхода из критической секции.
+    \end{itemize}
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Взаимное исключение 2/4}
+\begin{itemize}
+  \item Не более одного потока может находиться между lock и unlock
+  единовременно (и, соответственно, в критической секции)
+  \begin{itemize}
+    \item если в критической секции находится другой поток, то lock не вернет
+    управление, до тех пор пока поток в критической секции не вызовет unlock;
+  \end{itemize}
+  \item если в критической секции не находится ни один поток, то из нескольких
+  конкурирующих вызовов lock из разных потоков как минимум один окажется
+  успешным
+  \begin{itemize}
+    \item в противном случае мы могли бы просто сделать бесконечный цикл в
+    lock - это избавляет от гонки, но создает несколько других проблем.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Взаимное исключение 3/4}
+\begin{itemize}
+  \item Корректность гарантируется только для потоков использующих mutex
+  \begin{itemize}
+    \item т. е. все потоки должны использовать lock/unlock, чтобы все было
+    хорошо;
+    \item т. е. приходится полагаться, на то, что потоки не делают гадостей.
+  \end{itemize}
+  \item Кроме того можем считать, что ни один поток не "сидит" в критической
+  секции бесконечно долго
+  \begin{itemize}
+    \item т. е. если поток вызвал lock, то он точно когда-нибудь вызовет unlock;
+    \item не сильное ограничение, учитывая, что мы и так считаем потоки
+    хорошими;
+    \item приходится следить, чтобы поток не "упал" в критической секции.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Взаимное исключение 4/4}
+\begin{itemize}
+  \item Мы не можем делать предположений
+  \begin{itemize}
+    \item о скорости работы потоков
+    \begin{itemize}
+      \item мы знаем, что время нахождения в критической секции конечно, но
+      конкретное ограничение сверху нам не известно и мы не можем на него
+      полагаться;
+    \end{itemize}
+    \item о взаимной скорости работы потоков
+    \begin{itemize}
+      \item мы не можем считать, что один поток быстрее другого, или что их
+      скорости работы;
+    \end{itemize}
+    \item другими словами, мы не можем делать предположений о том, как
+    инструкции из разных потоков "накладываются" друг на друга.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Реализация взаимного исключения}
+\framesubtitle{Глобальный флаг 1/2}
+\begin{columns}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+extern int claim1;
+int claim0;
+
+void lock0(void)
+{
+  claim0 = true;
+  while (claim1);
+}
+
+void unlock0(void)
+{
+  claim0 = false
+}
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+extern int claim0;
+int claim1;
+
+void lock1(void)
+{
+  claim1 = true;
+  while (claim0);
+}
+
+void unlock1(void)
+{
+  claim1 = false;
+}
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Реализация взаимного исключения}
+\framesubtitle{Глобальный флаг 2/2}
+\begin{columns}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}[basicstyle=\small]
+void lock0(void)
+{
+  claim0 = true;
+
+  while (claim1);
+}
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}[basicstyle=\small]
+void lock1(void)
+{
+
+  claim1 = true;
+  while (claim0);
+}
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\begin{itemize}
+  \item Оба потока могут установить свои флаги до того, как другой поток
+  успеет их проверить
+  \begin{itemize}
+    \item оба потока будут ждать в цикле бесконечно - такая ситуация называется
+    deadlock-ом.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Реализация взаимного исключения}
+\framesubtitle{Глобальный порядок 1/2}
+\begin{columns}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+int turn;
+
+void lock0(void)
+{
+  while (turn != 0);
+}
+
+void unlock0(void)
+{
+  turn = 1;
+}
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+extern int turn;
+
+void lock1(void)
+{
+  while (turn != 1);
+}
+
+void unlock1(void)
+{
+  turn = 0;
+}
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Реализация взаимного исключения}
+\framesubtitle{Глобальный порядок 2/2}
+\begin{columns}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+int turn;
+
+void lock0(void)
+{
+  while (turn != 0);
+}
+
+void unlock0(void)
+{
+  turn = 1;
+}
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+extern int turn;
+
+void lock1(void)
+{
+  while (turn != 1);
+}
+
+void unlock1(void)
+{
+  turn = 0;
+}
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\begin{itemize}
+  \item Что если lock0 никогда не будет вызван?
+  \begin{itemize}
+    \item тогда и unlock0 никогда не будет вызван;
+    \item turn никогда не будет равен 1;
+    \item lock1 никогда не вернет управление.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Реализация взаимного исключения}
+\framesubtitle{Глоабльный порядок и глоабльный флаг 1/2}
+\begin{columns}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+int claim0;
+extern int claim1;
+int turn;
+
+void lock0(void)
+{
+  claim0 = true;
+  turn = 1;
+
+  while (claim1 && turn != 0);
+}
+
+void unlock0(void)
+{
+  claim0 = flase;
+}
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+extern int claim0;
+int claim1;
+extern int turn;
+
+void lock1(void)
+{
+  claim1 = true;
+  turn = 0;
+
+  while (claim0 && turn != 1);
+}
+
+void unlock1(void)
+{
+  claim1 = flase;
+}
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Реализация взаимного исключения}
+\framesubtitle{Глоабльный порядок и глоабльный флаг 2/3}
+\begin{columns}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+void lock0(void)
+{
+  claim0 = true;
+  turn = 1;
+
+  while (claim1 && turn != 0);
+}
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+void lock1(void)
+{
+  claim1 = true;
+  turn = 0;
+
+  while (claim0 && turn != 1);
+}
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\begin{itemize}
+  \item Если в lock0 мы прочитали claim1 и он оказался равен false, то
+  \begin{itemize}
+    \item другой поток не вызывал lock1 вообще и не присваивал $turn = 0$,
+    т. е. поток вызвавший lock0 - единственный кандидат;
+    \item другой поток не сможет войти до тех пор пока мы не вызовем unlock0,
+    т. к. claim0 равен true и другой поток сам присвоит $turn = 0$ в lock1.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Реализация взаимного исключения}
+\framesubtitle{Глоабльный порядок и глоабльный флаг 3/3}
+\begin{columns}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+void lock0(void)
+{
+  claim0 = true;
+  turn = 1;
+
+  while (claim1 && turn != 0);
+}
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+void lock1(void)
+{
+  claim1 = true;
+  turn = 0;
+
+  while (claim0 && turn != 1);
+}
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\begin{itemize}
+  \item Если в lock0 мы прочитали claim1 и он оказался равен true, то
+  \begin{itemize}
+    \item lock1 либо еще не присвоил в turn значение 0
+    \begin{itemize}
+      \item значит он скоро сделает это, и мы будем ждать пока lock1 не выполнит
+      $turn = 0$, после чего сможем выйти из цикла;
+    \end{itemize}
+    \item либо сделал это до того, как lock0 присвоил $turn = 1$
+    \begin{itemize}
+      \item значит claim0 и claim1 оба равны true и turn равен 1, значит lock1
+      рано или поздно выйдет из цикла, в то время как lock0 будет ждать в цикле.
+    \end{itemize}
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Алгоритм Петерсона}
+\begin{columns}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+void lock0(void)
+{
+  turn = 1;
+  claim0 = true;
+
+  while (claim1 && turn != 0);
+}
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+void lock1(void)
+{
+  turn = 0;
+  claim1 = true;
+
+  while (claim0 && turn != 1);
+}
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\begin{itemize}
+  \item В алгоритме очень важен порядок присваиваний в claim0/claim1 и turn:
+  \begin{itemize}
+    \item допустим lock0 присвоил $turn = 1$, затем в дело вступил lock1;
+    \item lock1 присвоил $turn = 0$ и затем $claim1 = true$, после чего
+    прочитал значение claim0 и увидел там false - цикл в lock1 завершился;
+    \item lock0 продолжил там где остановился, т. е. присвоил $claim0 = true$,
+    далее lock0 проверяет условие цикла и видит turn равным 0, т. к. lock1
+    записал туда последним, и тоже выходит из цикла.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Алгоритм Петерсона для N потоков 1/4}
+\begin{lstlisting}
+int claim[N];
+int turn[N - 1];
+
+void lock(int thread_id)
+{
+  for (int level = 0; level < N - 1; ++level) {
+    claim[thread_id] = level + 1;
+    turn[level] = thread_id;
+
+    while (1) {
+      int found = false;
+      for (int thread = 0; !found && thread != N; ++thread) {
+        if (thread == thread_id) continue;
+        found = claim[thread] > level;
+      }
+      if (!found) break;
+      if (turn[level] != thread_id) break;
+    }
+  }
+}
+
+void unlock(int thread_id)
+{
+  claim[thread_id] = 0;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}
+\frametitle{Алгоритм Петерсона для N потоков 2/4}
+\begin{itemize}
+  \item у нас есть $N - 1$ глобaлных флага в массиве turn;
+  \item и $N$ переменных намерения в массиве claim - по одной для каждого
+  потока;
+  \item изначально все перемнные claim равны 0.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Алгоритм Петерсона для N потоков 3/4}
+\begin{itemize}
+  \item Выбор потока входящего в критическую секцию то же самое, что и выбор
+  потоков, которые будут ждать:
+  \begin{itemize}
+    \item если у нас три потока, то нужно отсеять два и оставить один;
+    \item отсеивание будет происходить в два этапа: на нулевом этапе отсеивается
+    один из потоков, на первом второй;
+    \item переменная claim для потока хранит номер этапа (+ 1), до которого он
+    добрался;
+    \item каждая переменная turn соответствует своему этапу и хранит
+    идентификатор последнего потока добравшегося до этого этапа.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Алгоритм Петерсона для N потоков 4/4}
+\begin{itemize}
+  \item Поток \emph{может} перейти к следующему этапу если выполняется хотя бы
+  одно из условий:
+  \begin{itemize}
+    \item нет потоков на том же этапе или впереди него, т. е. поток уже
+    победил - цикл проверяющий значения claim всех потоков отвечает за это
+    условие;
+    \item поток не последний поток на данном этапе, т. е. пришел новый поток
+    и записал в соответствующий turn свой идентификатор - проверка turn в код
+    отвечает за это условие;
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Порядок входа в критическую секцию}
+\begin{itemize}
+  \item Если сразу несколько потоков конкурируют за lock, то в каком порядке
+  они их получат?
+  \begin{itemize}
+    \item нам бы хотелось, чтобы каждый из кандидатов завершил lock рано или
+    поздно;
+    \item но не хотелось бы, чтобы ожидание завершения lock было не
+    ограниченным;
+    \item еще больше не хотелось бы ждать, пока другие входят и выходят из
+    критической секцию.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Честность алгоритма Петерсона, пример}
+\tiny\begin{enumerate}
+  \item Изначально все равно 0:
+  \\$claim[0] == claim[1] == claim[2] == 0$ и $turn[0] == turn[1] == 0$;
+  \item поток 0 вызывает lock:
+  \\$claim[0] == 1$, $claim[1] == claim[2] == 0$ и $turn0 == turn1 == 0$;
+  \item поток 1 вызывает lock:
+  \\$claim[0] == claim[1] == 1$, $claim[2] == 0$, $turn[0] == 1$ и
+  $turn[1] == 0$;
+  \item поток 2 вызывает lock:
+  \\$claim[0] == claim[1] == claim[2] == 1$, $turn[0] == 2$ и $turn[1] == 0$;
+  \item \alert{поток 1 не последний вошел на этап 0, а значит он может
+  двинуться дальше:
+  \\$claim[0] == claim[2] == 1$, $claim[1] == 2$, $turn[0] == 2$ и
+  $turn[1] == 1$;}
+  \item впереди потока 1 или на том же этапе других потоков нет - поток 1
+  выиграл, он входит в критическую секцию, а затем выходит из нее:
+  \\$claim[0] == claim[2] == 1$, $claim[1] == 0$, $turn[0] == 2$ и
+  $turn[1] == 1$;
+  \item поток 1 опять вызывает lock:
+  \\$claim[0] == claim[1] == claim[2] == 1$, $turn[0] == 1$ и $turn[1] == 1$;
+  \item поток 2 не последний на этапе 0 - он может перейти к следующему этапу:
+  \\$claim[0] == claim[1] == 1$, $claim[2] == 2$, $turn[0] == 1$ и
+  $turn[1] == 2$;
+  \item впереди потока 2 или на том же этапе никоого нет - поток 2 выиграл, он
+  входит в критическую секцию, а затем выходит из нее:
+  \\$claim[0] == claim[1] == 1$, $claim[2] == 0$, $turn[0] == 1$ и
+  $turn[1] == 2$;
+  \item поток 2 опять вызывает lock:
+  \\$claim[0] == claim[1] == claim[2] == 1$, $turn[0] == 2$ и $turn[1] == 2$;
+  \item \alert{поток 1 не последний вошел на этап 0, а значит он может
+  двинуться дальше:
+  \\$claim[0] == claim[2] == 1$, $claim[1] == 2$, $turn[0] == 2$ и
+  $turn[1] == 1$.}
+\end{enumerate}
+\end{frame}
+
+\begin{frame}
+\frametitle{Честность взаимного исключения 1/2}
+\begin{itemize}
+  \item Разделим lock на две части:
+  \begin{enumerate}
+    \item вход (будем обозначать его как $D$) - эта часть всегда завершается за
+    известное заранее конечное количество шагов;
+    \item ожидание (будем обозначать как $W$) - может потребовать неограниченное
+    количество шагов:
+    \begin{itemize}
+      \item зависит от того, как долго другой поток сидит в критической секции;
+      \item зависит от того, в каком порядке накладываются инструкции из разных
+      потоков;
+    \end{itemize}
+    \item после ожидания идет критическая секция (будем обозначть ее как $CS$).
+  \end{enumerate}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Честность взаимного исключения 2/2}
+\begin{itemize}
+  \item Свойство $r$-ограниченного ожидания:
+  \begin{itemize}
+    \item для некоторый потоков $A$ и $B$, из того что $D^j_A$ предшествует
+    $D^k_B$ ($j$-ый вход потока $A$ предшествует $k$-ому входу потока $B$),
+    следует, что $CS^j_A$ предшествует $CS^{k + r}_B$;
+    \item другими словами, после того как мы завершили свой $D$, то после этого
+    не более чем $r$ потоков войдут в критическую секцию (\emph{ВНИМАНИЕ: это
+    очень-очень-очень грубое упрощение!}).
+  \end{itemize}
+  \item Для алгоритма Петерсона для N потоков не существует такого разделения
+  на $D$ и $W$ чтобы он удовлетворял свойству $r$-ограниченного ожидания для
+  любого $r$
+  \begin{itemize}
+    \item в частном случае двух потоков алгоритм Петерсона удовлетворяет
+    свойству $1$-ограниченного ожидания.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Взаимное исключение с очередью}
+\begin{itemize}
+  \item Пусть все потоки, которые хотят войти в критическую секцию
+  выстравиваются в очередь:
+  \begin{itemize}
+    \item будем выдавать каждому пришедшему наименьший из номеров больший
+    всех номеров в очереди;
+    \item обслуживать будем в порядке возрастания номеров.
+  \end{itemize}
+  \item Как найти и занять нужный номер?
+  \begin{itemize}
+    \item мы должны посмотреть на номера в очереди и выбрать себе подходящий;
+    \item но это действие звучит очень не атомарно;
+    \item будем вместо номера использовать пару: номер и идентификатор потока;
+    \item даже если выбранный номер не уникален, пара будет уникальной.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Алгоритм пекарни}
+\begin{lstlisting}
+int select[N];
+int ticket[N];
+
+int max(void)
+{
+  int rc = 0;
+  for (int i = 0; i != N; ++i)
+    if (ticket[i] > rc)
+      rc = ticket[i];
+  return rc;
+}
+
+void lock(int thread_id)
+{
+  select[thread_id] = true;
+  ticket[thread_id] = max() + 1;
+  select[thread_id] = false;
+
+  for (int thread = 0; thread != N; ++thread) {
+    if (thread == thread_id)
+      continue;
+    while (select[thread]);
+    while (ticket[thread] && ((ticket[thread] < ticket[thread_id]) ||
+      (ticket[thread] == ticket[thread_id] && thread < thread_id)));
+  }
+}
+
+void unlock(int thread_id)
+{
+  ticket[thread_id] = 0;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}
+\frametitle{Честность алгоритма пекарни}
+\begin{itemize}
+  \item вход алгоритма пекарни $D$ состоит из выбора номера для потока;
+  \item если $D$ потока $A$ предшествует $D$ потока $B$, то возможны два
+  случая:
+  \begin{itemize}
+    \item номер выбранный потоком $B$ меньше или равен номеру выбранному потоком
+    $A$, но это значит, что поток $B$ не видел номер выбранный $A$, т. е. $A$
+    его уже занулил, т. е. завершил критическую секцию;
+    \item номер выбранный потоком $B$ больше номера выбранного потоком $A$, а
+    значит в критическую секцию он войдет позже.
+  \end{itemize}
+  \item Другими словами алгоритм пекрани является $0$-ограниченным
+  \begin{itemize}
+    \item обратите внимание, что если $D_A$ не предшествует строго $D_B$ то их
+    взаимный порядок может быть любым.
+  \end{itemize}
+\end{itemize}
+\end{frame}

@@ -1,0 +1,47 @@
+\documentclass[12pt]{beamer}
+
+\hypersetup{colorlinks=true,linkcolor=red}
+\usetheme{default}
+\usecolortheme{albatross}
+
+\usepackage[utf8]{inputenc}
+\usepackage[russian,english]{babel}
+\usepackage[T2A]{fontenc}
+\usepackage{hyperref}
+\usepackage[final]{listings}
+\usepackage{breakurl}
+\usepackage{cite}
+\usepackage{perpage}
+
+\graphicspath{{img/}}
+
+\def\Url\Breaks{\do\/\do-}
+\lstset{
+  frame=single,
+  breaklines=true,
+  basicstyle=\tiny,
+  postbreak=\raisebox{0ex}{\ensuremath{\hookrightarrow\space}},
+  numbers=left
+}
+
+\MakePerPage{footnote}
+
+\title{Operating Systems}
+\subtitle{Race conditions and mutual exclustion}
+\author{Me}
+\date{\today}
+
+\begin{document}
+  \begin{frame}
+    \titlepage
+  \end{frame}
+
+  \input{races}
+  \input{mutex}
+
+  \begin{frame}
+  \begin{center}
+  \Huge Q\&A
+  \end{center}
+  \end{frame}
+\end{document}
