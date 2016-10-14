@@ -246,8 +246,82 @@ void unlock1(void)
 \end{frame}
 
 \begin{frame}[fragile]
+\frametitle{Глобaльный флаг и глобальный порядок 1/2}
+\begin{columns}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+void lock0(void)
+{
+  turn = 1;
+  claim0 = true;
+
+  while (claim1 && turn != 0);
+}
+
+void unlock0(void)
+{
+  claim0 = flase;
+}
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+void lock1(void)
+{
+  turn = 0;
+  claim1 = true;
+
+  while (claim0 && turn != 1);
+}
+
+void unlock1(void)
+{
+  claim1 = flase;
+}
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Глобaльный флаг и глобальный порядок 2/2}
+\begin{columns}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+void lock0(void)
+{
+  turn = 1;
+  claim0 = true;
+
+  while (claim1 && turn != 0);
+}
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.45\linewidth}
+    \begin{lstlisting}
+void lock1(void)
+{
+  turn = 0;
+  claim1 = true;
+
+  while (claim0 && turn != 1);
+}
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\begin{itemize}
+  \item допустим lock0 присвоил $turn = 1$, затем в дело вступил lock1;
+  \item lock1 присвоил $turn = 0$ и затем $claim1 = true$, после чего
+  прочитал значение claim0 и увидел там false - цикл в lock1 завершился;
+  \item lock0 продолжил там где остановился, т. е. присвоил $claim0 = true$,
+  далее lock0 проверяет условие цикла и видит turn равным 0, т. к. lock1
+  записал туда последним, и тоже выходит из цикла.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
 \frametitle{Реализация взаимного исключения}
-\framesubtitle{Глоабльный порядок и глоабльный флаг 1/2}
+\framesubtitle{Глобaльный порядок и глобальный флаг 1/3, again...}
 \begin{columns}
   \begin{column}{.45\linewidth}
     \begin{lstlisting}
@@ -294,7 +368,7 @@ void unlock1(void)
 
 \begin{frame}[fragile]
 \frametitle{Реализация взаимного исключения}
-\framesubtitle{Глоабльный порядок и глоабльный флаг 2/3}
+\framesubtitle{Глоабльный порядок и глобальный флаг 2/3, again...}
 \begin{columns}
   \begin{column}{.45\linewidth}
     \begin{lstlisting}
@@ -332,7 +406,7 @@ void lock1(void)
 
 \begin{frame}[fragile]
 \frametitle{Реализация взаимного исключения}
-\framesubtitle{Глоабльный порядок и глоабльный флаг 3/3}
+\framesubtitle{Глоабльный порядок и глобальный флаг 3/3, again...}
 \begin{columns}
   \begin{column}{.45\linewidth}
     \begin{lstlisting}
@@ -370,45 +444,6 @@ void lock1(void)
       \item значит claim0 и claim1 оба равны true и turn равен 1, значит lock1
       рано или поздно выйдет из цикла, в то время как lock0 будет ждать в цикле.
     \end{itemize}
-  \end{itemize}
-\end{itemize}
-\end{frame}
-
-\begin{frame}[fragile]
-\frametitle{Алгоритм Петерсона}
-\begin{columns}
-  \begin{column}{.45\linewidth}
-    \begin{lstlisting}
-void lock0(void)
-{
-  turn = 1;
-  claim0 = true;
-
-  while (claim1 && turn != 0);
-}
-    \end{lstlisting}
-  \end{column}
-  \begin{column}{.45\linewidth}
-    \begin{lstlisting}
-void lock1(void)
-{
-  turn = 0;
-  claim1 = true;
-
-  while (claim0 && turn != 1);
-}
-    \end{lstlisting}
-  \end{column}
-\end{columns}
-\begin{itemize}
-  \item В алгоритме очень важен порядок присваиваний в claim0/claim1 и turn:
-  \begin{itemize}
-    \item допустим lock0 присвоил $turn = 1$, затем в дело вступил lock1;
-    \item lock1 присвоил $turn = 0$ и затем $claim1 = true$, после чего
-    прочитал значение claim0 и увидел там false - цикл в lock1 завершился;
-    \item lock0 продолжил там где остановился, т. е. присвоил $claim0 = true$,
-    далее lock0 проверяет условие цикла и видит turn равным 0, т. к. lock1
-    записал туда последним, и тоже выходит из цикла.
   \end{itemize}
 \end{itemize}
 \end{frame}
