@@ -1,0 +1,159 @@
+\begin{frame}[fragile]
+\frametitle{Алгоритм Петерсона: то, что написали вы}
+\begin{lstlisting}
+int turn;
+int claim[2];
+
+void lock(int thread)
+{
+	const int other = (thread + 1) & 1;
+
+	clain[thread] = 1;
+	turn = other;
+
+	while (claim[other] && turn != thread);
+}
+
+void unlock(int thread)
+{
+	claim[thread] = 0;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Алгоритм Петерсона: то, что уидел компилятор}
+\begin{lstlisting}
+.comm claim, 8
+
+lock:
+	/* eax = thread + 1 */
+	leal	1(%rdi), %eax
+	/* rdx = thread */
+	movslq	%edi, %rdx
+	/* claim[thread] = 1 */
+	movl	$1, claim(,%rdx,4)
+	/* eax = eax & 1, aka, eax = other */
+	andl	$1, %eax
+
+	/* rdx = other */
+	movslq	%eax, %rdx
+
+	/* check if claim[other] == 0 */
+	movl	claim(,%rdx,4), %edx
+	testl	%edx, %edx
+	je	exit
+
+	/* check if other == thread */
+	cmpl	%eax, %edi
+	je	exit
+
+loop:	jmp	loop
+
+exit:	ret
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}
+\frametitle{Почему???}
+\begin{itemize}
+  \item Почему компилятор выкинул turn?
+  \begin{itemize}
+    \item Компилятор не увидел смысла в сохранении turn и удалил его.
+  \end{itemize}
+  \item Почему компилятор сравнивает other с thread?
+  \begin{itemize}
+    \item Компилятор выкинул turn, other - это значение, которое должно было
+    лежать в turn.
+  \end{itemize}
+  \item Почему компилятор проверяет условия только один раз?
+  \begin{itemize}
+    \item Компиялтор не видит, что turn или claim могут измениться, а значит
+    достаточно проверить их один раз и либо выйти либо зациклиться.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Компилятор виноват?}
+\begin{itemize}
+  \item Компилятор работает в терминах наблюдаемого поведения:
+  \begin{itemize}
+    \item компилятор может делать с вашей программой все что угодно, до тех пор
+    пока наблюдаемое поведение сохраняется;
+    \item компилятор хочет делать с вашей программой много чего, потому что он
+    должен оптимизировать код.
+  \end{itemize}
+  \item Как сделать операции над данными частью наблюдаемого поведения?
+  \begin{itemize}
+    \item в языках C и C++ для этого есть ключевое слово \emph{volatile};
+    \item компилятор воздерживается от многих оптимизаций кода работающего над
+    volatile объектами.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Оптимизации компилятора и volatile}
+\begin{itemize}
+  \item Пометив данные как volatile вы связываете компилятору руки везде, где
+  вы используете volatile данные
+  \begin{itemize}
+    \item причем везде - и там где это важно и там где нет;
+    \item есть ли более точечные средства ограничения фантазии компилятора?
+    \item обычно они есть, но они зависят от компилятора.
+  \end{itemize}
+  \item Барьеры компиялтора:
+  \begin{itemize}
+    \item например, в gcc можно использовать такую конструкцию
+\begin{lstlisting}
+__asm__ volatile ("" : : : "memory")
+\end{lstlisting}
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Алгоритм Петерсона с барьерами компиялтора}
+\begin{lstlisting}
+int turn;
+int claim[2];
+
+void lock(int thread)
+{
+	const int other = (thread + 1) & 1;
+
+	claim[thread] = 1;
+	__asm__ volatile ("" : : : "memory"); // order is important here
+	turn = other;
+
+	do {
+		// reread claim and turn after every iteration
+		__asm__ volatile ("" : : : "memory");
+	} while (claim[other] && turn != thread);
+}
+
+void unlock(int thread)
+{
+	claim[thread] = 0;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}
+\frametitle{Замечания про volatile}
+\begin{itemize}
+  \item volatile не может являться средством синхронизации:
+  \begin{itemize}
+    \item volatile не дает никаких гарантий атомарности, т. е. работа с volatile
+    переменными все еще не атомарна;
+    \item стандарты C и C++ вводят такое понятие как \emph{точка следования},
+    между двумя точками следования операциям компиялтору разрешено
+    переупорядочивать обращения к volatile объектам;
+    \item стандарты не определяют строго, что такое "обращение" к volatile
+    объекту;
+    \item компиялтор - не единственный источник переупорядочивания/оптимизаций,
+    т. е. только компиялторных средств не достаточно.
+  \end{itemize}
+\end{itemize}
+\end{frame}

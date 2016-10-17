@@ -1,0 +1,45 @@
+\begin{frame}[fragile]
+\frametitle{Теперь CPU виноват?}
+\begin{columns}
+  \begin{column}{0.35\linewidth}
+    \begin{lstlisting}
+#define barrier() \
+  __asm__ volatile( "" \
+	: \
+	: \
+	: "memory")
+
+void foo(void)
+{
+  a = 1;
+  barrier();
+  b = 1;
+}
+
+void bar(void)
+{
+  while (b == 0) {
+    barrier();
+    continue;
+  }
+  barrier();
+  assert(a == 1);
+}
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{0.6\linewidth}
+  \begin{itemize}
+    \item Посмотрим на функцию bar:
+    \begin{itemize}
+      \item допустим переменная \emph{a} находится в кеше CPU, а переменная
+      \emph{b} нет;
+      \item т. е. чтение \emph{a} занимает много меньше времени, чем \emph{b};
+      \item если CPU будет ждать пока завершится чтение \emph{b} ему придется
+      остановиться;
+      \item но у него уже есть \emph{a} и он \emph{не знает} о зависимости между
+      ними, так может обработаем \emph{a} вперед?
+    \end{itemize}
+  \end{itemize}
+  \end{column}
+\end{columns}
+\end{frame}
