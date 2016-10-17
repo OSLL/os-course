@@ -1,0 +1,276 @@
+\begin{frame}
+\frametitle{RMW инструкции и аналоги}
+\begin{itemize}
+  \item Некоторые архитектуры позволяют прочитать/модифицировать/записать
+  переменную атомарно:
+  \begin{itemize}
+    \item атомарные инкремент и декремент;
+    \item CAS (Compare-And-Swap) - читает значение, сравнивает его с некоторым
+    значением и, если прочитанное значение совпало с аргументом, то записывает
+    новое значение.
+  \end{itemize}
+  \item Load Linked/Store Conditional:
+  \begin{itemize}
+    \item Load Linked читает значение из памяти;
+    \item Store Linked записывает значение в память, но только в том случае,
+    если кто-то другой не успел его перезаписать с момента Load Linked.
+  \end{itemize}
+  \item При этом налагаются серьезные ограничения
+  \begin{itemize}
+    \item в первую очередь на размер операндов.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Взаимное исключение сиспользованием CAS}
+\begin{lstlisting}
+#include <stdatomic.h>
+
+#define LOCKED   1
+#define UNLOCKED 0
+
+struct spinlock {
+  atomic_int locked;
+};
+
+void lock(struct spinlock *lock)
+{
+  while (atomic_exchange_explicit(&lock->locked,
+            LOCKED, memory_order_acquire) == LOCKED);
+}
+
+void unlock(struct spinlock *lock)
+{
+  atomic_store_explicit(&lock->locked, UNLOCKED,
+    memory_order_release);
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}
+\frametitle{Проблемы CAS lock-а}
+\begin{itemize}
+  \item Честность - никаких гарантий.
+  \item Прозводительность:
+  \begin{itemize}
+    \item помните о когерентности кешей, чтобы что-то записать приходиться
+    получить переменную в эксклюзивное пользование;
+    \item все потоки/CPU будут драться за одну общую переменную пытаясь туда
+    что-то записать;
+    \item сообщения между кешами будут мешать другим операциям.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Взаимное исключение сиспользованием CAS, версия 2}
+\begin{lstlisting}
+#include <stdatomic.h>
+
+#define LOCKED   1
+#define UNLOCKED 0
+
+struct spinlock {
+  atomic_int locked;
+};
+
+void lock(struct spinlock *lock)
+{
+  do {
+    while (atomic_load_explicit(&lock->locked,
+             memory_order_relaxed) == LOCKED);
+  } while (atomic_exchange_explicit(&lock->locked,
+             LOCKED, memory_order_acquire) == LOCKED);
+}
+
+void unlock(struct spinlock *lock)
+{
+  atomic_store_explicit(&lock->locked, UNLOCKED,
+    memory_order_release);
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}
+\frametitle{Проблемы 2-ой версии}
+\begin{itemize}
+  \item Честность - никаких гарантий, опять.
+  \item Прозводительность:
+  \begin{itemize}
+    \item теперь потоки сначала читают переменную, несколько CPU могут держать
+    в кеше копии одной переменной, до тех пор, пока один из них не попытается
+    модифицировать перменную;
+    \item т. е. пока лок занят и мы ждем нам не нужно пересылать сообщения между
+    кешами;
+    \item но стоит владельцу лока его освободить, нам опятьприходится довольно
+    активно обмениваться сообщениями.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Ticket Lock}
+\begin{lstlisting}
+#include <stdatomic.h>
+
+struct spinlock {
+  atomic_uint next;
+  atomic_uint current;
+};
+
+void lock(struct spinlock *lock)
+{
+  const unsigned ticket = atomic_fet_add_explicit(&lock->next, 1,
+                            memory_order_relaxed);
+
+  while (atomic_load_explicit(&lock->current,
+           memory_order_acquire) != ticket);
+}
+
+void unlock(struct spinlock *lock)
+{
+  const unsigned current = atomic_load_explicit(&lock->current,
+                             memory_order_relaxed);
+
+  atomic_store_explicit(&lock->current, current + 1,
+    memory_order_release);
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}
+\frametitle{Проблемы Ticket Lock-а}
+\begin{itemize}
+  \item Честность:
+  \begin{itemize}
+    \item все потоки выстраиваются в очередь, согласно порядку инкремента
+    переменной next;
+    \item с честностью все в порядке!
+  \end{itemize}
+  \item Производительность:
+  \begin{itemize}
+    \item потоки модифицируют одну общую переменную, но только один раз и после
+    этого ее не трогают;
+    \item активное ожидание использует только атомарное чтение;
+    \item при освобождении лока происходит обмен сообщениями.
+  \end{itemize}
+  \item А есть ли проблемы?
+  \begin{itemize}
+    \item этот алгоритм достаточно хорош, чтобы использоваться в ядре довольно
+    популярной ОС;
+    \item но мы можем сделать лучше!
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{MCS Lock: lock}
+\begin{lstlisting}
+#include <stdatomic.h>
+
+struct node {
+  struct node * _Atomic next;
+  atomic_int wait;
+};
+
+struct spinlock {
+  struct node * _Atomic tail;
+};
+
+void lock(struct spinlock *lock, struct node *self)
+{
+  atomic_store_explicit(&self->next, 0, memory_order_relaxed);
+  atomic_store_explicit(&self->wait, 0, memory_order_relaxed);
+
+  struct node *tail = atomic_exchange_explicit(&lock->tail, self,
+                        memory_order_acq_rel);
+
+  if (!tail)
+    return;
+
+  atomic_store_explicit(&tail->next, self, memory_order_relaxed);
+  while (!atomic_load_explicit(&self->wait, memory_order_acquire));
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{MCS Lock: unlock}
+\begin{lstlisting}
+void unlock(struct spinlock *lock, struct node *self)
+{
+  struct node *tail = self, *next;
+
+  if (atomic_compare_exchange_strong_explicit(&lock->tail, &tail, 0,
+        memory_order_release, memory_order_relaxed))
+    return;
+
+  while (!(next = atomic_load_explicit(&self->next,
+                    memory_order_relaxed)));
+  atomic_store_explicit(&next->wait, 0, memory_order_release);
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}
+\frametitle{MCS Lock: зачем так сложно?}
+\begin{itemize}
+  \item Очевидно, MCS Lock гарантирует честность:
+  \begin{itemize}
+    \item все потоки выстравиваются в очередь;
+    \item причем в прямом смысле: у нас есть связный список ожидающих.
+  \end{itemize}
+  \item Не более двух потоков используют одну переменную \emph{wait}:
+  \begin{itemize}
+    \item при unlock-е Invalidate достаточно отослать только одному CPU (если
+    его можно отослать только одному CPU);
+    \item отреагировать на Invalidate должен только один CPU.
+  \end{itemize}
+  \item Статья (с кучей другой информации о локах):
+  \begin{itemize}
+    \item \href{https://www.cs.rice.edu/~johnmc/papers/tocs91.pdf}{Algorithms
+    for Scalable Synchronization on Shared-Memory Multiprocessors}.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Локи и прерывания}
+\begin{itemize}
+  \item Рассмотрим следующий сценарий:
+  \begin{itemize}
+    \item поток захватил лок, и работает с разделяемой структурой памяти;
+    \item поток прерывается обработчиком прерываний, и так случилось, что
+    обработчик так же хочет захватить тот же самый лок;
+    \item что произойдет?
+    \begin{itemize}
+      \item если нас не прервет какое-то другое прерывание, то это deadlock!
+    \end{itemize}
+  \end{itemize}
+  \item Мораль: выключайте прерывания, перед захватом локов
+  \begin{itemize}
+    \item если лок очень загружен, то захват может занять какое-то время;
+    \item все это время прерывания на CPU будут выключена;
+    \item мораль: избегайте контеншена.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Блокировка потоков}
+\begin{itemize}
+  \item Рассмотренные локи в коде назывались spinlock:
+  \begin{itemize}
+    \item от слова spin, что в данном случае значит активное ожидание;
+    \item т. е. мы "крутимся" в цикле и не делаем ничего полезного;
+    \item это не плохо, если ждать нам не долго, но что если все не так?
+  \end{itemize}
+  \item Мы можем сообщить планировщику, что поток ждет
+  \begin{itemize}
+    \item т. е. мы можем снять поток с CPU и пометить его как заблокированный;
+    \item планировщик не будет давать ему CPU, пока поток не разблокируют;
+    \item такую реализацию часто называют mutex в различных библиотеках.
+  \end{itemize}
+\end{itemize}
+\end{frame}

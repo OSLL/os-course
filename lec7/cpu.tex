@@ -1,7 +1,7 @@
 \begin{frame}[fragile]
-\frametitle{Теперь CPU виноват?}
+\frametitle{Store Buffer 1/2}
 \begin{columns}
-  \begin{column}{0.35\linewidth}
+  \begin{column}{0.3\linewidth}
     \begin{lstlisting}
 #define barrier() \
   __asm__ volatile( "" \
@@ -27,7 +27,117 @@ void bar(void)
 }
     \end{lstlisting}
   \end{column}
-  \begin{column}{0.6\linewidth}
+  \begin{column}{0.8\linewidth}
+  \begin{itemize}
+    \item Посмотрим на функцию foo:
+    \begin{itemize}
+      \item допустим b лежит в кеше CPU, а a нет;
+      \item CPU пытается присвоить a, но ее нет в кеше, он посылает Invalidate и
+      должен дождаться ответа;
+      \item но CPU ведь уже знает, что будет лежать в a, ему даже не нужно
+      старое значение, так почему вдруг он должен ждать?
+    \end{itemize}
+  \end{itemize}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Store Buffer 2/2}
+\begin{itemize}
+  \item Если мы не можем писать прямо в кеш, пока не придет Invalidate Ack, то
+  заведем специальный некогерентный буфер для таких записей:
+  \begin{itemize}
+    \item такой буфер обычно называют Store Buffer;
+    \item как только мы получаем Invalidate Ack мы переносим данные из Store
+    Buffer в кеш;
+    \item сохранив данные в Store Buffer CPU может продолжать работать.
+  \end{itemize}
+  \item Не ломает ли Store Buffer что-нибудь?
+  \begin{itemize}
+    \item а если сообщения могут переупорядочиваться?
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Теперь CPU виноват? 1/2}
+\begin{columns}
+  \begin{column}{0.3\linewidth}
+    \begin{lstlisting}
+#define barrier() \
+  __asm__ volatile( "" \
+	: \
+	: \
+	: "memory")
+
+void foo(void)
+{
+  a = 1;
+  barrier();
+  b = 1;
+}
+
+void bar(void)
+{
+  while (b == 0) {
+    barrier();
+    continue;
+  }
+  barrier();
+  assert(a == 1);
+}
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{0.8\linewidth}
+  \begin{itemize}
+    \item Рассмотрим следующий порядок событий:
+    \begin{itemize}
+      \item CPU0 выполняет foo, а CPU1 выполняет bar;
+      \item переменная a хранится только в кеше CPU1, а b только в кеше CPU0;
+      \item CPU0 исполняет $a = 1$, переменной нет в кеше, записываем в Store
+      Buffer и посылаем Invalidate;
+      \item CPU1 проверяет условие цикла, переменной b нет в кеше, посылаем
+      Read;
+      \item CPU0 выполняет $b = 1$, b уже в кеше, можно прям там и обновить;
+      \item CPU0 получает Read и отсылает $b == 1$ в ответ;
+      \item CPU1 получает значение $b == 1$, и выполняет assert.
+    \end{itemize}
+  \end{itemize}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Теперь CPU виноват? 2/2}
+\begin{columns}
+  \begin{column}{0.3\linewidth}
+    \begin{lstlisting}
+#define barrier() \
+  __asm__ volatile( "" \
+	: \
+	: \
+	: "memory")
+
+void foo(void)
+{
+  a = 1;
+  barrier();
+  b = 1;
+}
+
+void bar(void)
+{
+  while (b == 0) {
+    barrier();
+    continue;
+  }
+  barrier();
+  assert(a == 1);
+}
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{0.8\linewidth}
   \begin{itemize}
     \item Посмотрим на функцию bar:
     \begin{itemize}
@@ -42,4 +152,39 @@ void bar(void)
   \end{itemize}
   \end{column}
 \end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Барьеры памяти}
+\begin{itemize}
+  \item Откуда вдруг взялось так много проблем?
+  \begin{itemize}
+    \item при многопточности, важными становятся зависимости между переменными;
+    \item например, для функции bar важно, чтобы foo сначала записала a, и
+    только потом b;
+    \item ни компилятор ни CPU об этих зависимостях ничего не знают.
+  \end{itemize}
+  \item Чтобы указать CPU, какие действия нельзя "переставлять" есть специальные
+  инструкции
+  \begin{itemize}
+    \item такие инструкции называют барьерами памяти, что конкретно они
+    разершают или запрещают зависит от архитектуры.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Memory Order}
+\begin{itemize}
+  \item Правила, по которым CPU может переставлять инструкции зависят от
+  архитектуры, что делать простым смертным?
+  \begin{itemize}
+    \item языки программирования предоставляют несколько хорошо известных
+    сравнительно (ну да, конечно...) простых моделей: JMM, sequential
+    consistency, acquire/consume/release;
+    \item вы можете просто пользоваться обычными mutex-ами реализованными
+    кем-то другим и не иметь проблем с memory order, т. к. lock и unlock
+    делают такими, чтобы они использовали все нужные барьеры памяти/компилятора.
+  \end{itemize}
+\end{itemize}
 \end{frame}
