@@ -1,0 +1,207 @@
+\begin{frame}
+\frametitle{Проблемы блокирующей синхронизации}
+\begin{itemize}
+  \item С использованием взаимного исключения может быть связан ряд проблем:
+  \begin{itemize}
+    \item конвоирование и инверсия приоритетов;
+    \item отсутвие "композицируемости".
+    \item deadlock-и;
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Композиция модулей}
+\begin{itemize}
+  \item Один из основных инженерных принципов состоит в том, чтобы собирать
+  сложные системы из простых компонентов:
+  \begin{itemize}
+    \item вы разбиваете свой код на фукнции/классы;
+    \item функции и классы группируются в библиотеки;
+    \item из библиотек и соединяющего их кода создается приложение.
+  \end{itemize}
+  \item Принцип работает до тех пор пока компоненты сравнительно "просты" и
+  "независимы":
+  \begin{itemize}
+    \item каждый из них решает конкретную задачу, и решение можно проверить;
+    \item собирая приложение из корректных компонет мы получаем корректное
+    приложение (с кучей но...).
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Композиция локов}
+\begin{columns}
+  \begin{column}{.5\linewidth}
+    \begin{lstlisting}
+size_t squeue_size(struct squeue *q)
+{
+    size_t size;
+
+    lock(&q->lock);
+    size = queue_size(&q->queue);
+    unlock(&q->lock);
+    return size;
+}
+
+struct node *squeue_pop(struct squeue *q)
+{
+    struct node *node;
+
+    lock(&q->lock);
+    node = queue_pop(&q->queue);
+    unlock(&q->lock);
+    return node;
+}
+
+int main()
+{
+    struct squeue queue;
+    ...
+    if (squeue_size(&queue))
+        process(squeue_pop(&queue));
+    ...
+}
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.6\linewidth}
+    \begin{itemize}
+      \item Локи не компонуются:
+      \begin{itemize}
+        \item т. е. нельзя ожидать, что пару корректных, с точки зрения
+        многопоточности, функций можно объединить в новую корректную функцию;
+        \item ответсвенность за использование локов ложится на пользователя.
+      \end{itemize}
+    \end{itemize}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Deadlock}
+\begin{itemize}
+  \item Deadlock - состояние потока, в котором он не может прогрессировать
+  \begin{itemize}
+    \item пример взаимной блокировки потоков: \emph{Thread 0} держит блокировку
+    \emph{Lock 0}, а поток \emph{Thread 1} держит блокировку \emph{Lock 1};
+    \item представим, что \emph{Thread 0} попытается взять блокировку
+    \emph{Lock 1}, и одновременно \emph{Thread 1} попытается взять
+    \emph{Lock 0};
+    \item в deadlock-е может участвовать более 2 потоков и 2 блокировок.
+  \end{itemize}
+  \item Deadlock-и может быть трудно обнаружить:
+  \begin{itemize}
+    \item как и многие другие проблемы связанные с конкурентностью, они могут
+    проявляться очень редко;
+    \item для воспроизведения может потребоваться учесть очень много факторов.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Средства борьбы с deadlock-ами}
+\framesubtitle{Страусинный алгоритм}
+\begin{itemize}
+  \item Самый простой способ называется "страусинный алгоритм":
+  \begin{itemize}
+    \item если ПО не критично к надежности;
+    \item если deadlock проявляется редко;
+    \item то можно просто забить!
+  \end{itemize}
+  \item Классический пример cost/benefit анализа:
+  \begin{itemize}
+    \item поиск причин проблемы потребует много ресурсов (чем реже он
+    проявляется тем тяжелее найти причины);
+    \item выгода от решения проблемы минимально - раз в неделю мользователь
+    может перезапустить компьютер/программу;
+    \item явно не наш метод!
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Средства борьбы с deadlock-ами}
+\framesubtitle{Ограниченное ожидание}
+\begin{itemize}
+  \item Можно ограничить ожидание при вызове lock:
+  \begin{itemize}
+    \item если блокировку не удалось захватить в течении, скажем, минуты, то
+    можно подозревать deadlock;
+    \item можно собрать максимум возможной информации (backtrace-ы, информация
+    о блокировке, информация о потоке, который ее держит) и вывести сообщение.
+  \end{itemize}
+  \item Отличный инженерный вариант:
+  \begin{itemize}
+    \item его не трудно реализовать;
+    \item отсутсвие deadlock-ов не гарантируется, но если он возникнет у вас
+    будет максимум полезной информации.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Средства борьбы с deadlock-ами}
+\framesubtitle{Достоверное определение deadlock-а}
+\begin{itemize}
+  \item Долгое ожидание не гарантирует deadlock, но deadlock можно определить
+  достоверно:
+  \begin{itemize}
+    \item построим ориентированный граф, в котором каждый узел соответствует
+    потоку;
+    \item ребрам графа будут соответствовать незавершенные вызовы lock;
+    \item наличие циклов в таком графе означает deadlock;
+    \item сам цикл (потоки и блокировки) - ценная отладочная информация.
+  \end{itemize}
+  \item Имея такой граф зависимостей мы можем "исправлять" deadlock-и:
+  \begin{itemize}
+    \item для этого достаточно "удалить" одно из ребер в цикле;
+    \item можно сообщить потоку, что захват блокировки не удался;
+    \item это поможет только, если поток может адекватно обработать такую
+    ситуацию.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Средства борьбы с deadlock-ами}
+\framesubtitle{Граф исторических зависимостей}
+\begin{itemize}
+  \item Как находить deadlock-и до того как они произойдут?
+  \begin{itemize}
+    \item давайте определять зависимости между блокировками в виде
+    ориентированного графа;
+    \item вершинами графа будут различные блокировки;
+    \item из блокировки \emph{A} в блокировку \emph{B} в графе  ведет ребро,
+    если был поток, который пытался захватить \emph{A} с захваченной \emph{B};
+    \item мы можем запустить наше приложение и построить такой граф.
+  \end{itemize}
+  \item Если в графе исторических зависимостей есть цикл, то, \emph{вероятно},
+  у вас в программе есть deadlock
+  \begin{itemize}
+    \item при этом не учитывается количество потоков, и какой поток какие
+    зависимости в графе породил.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Средства борьбы с deadlock-ами}
+\framesubtitle{Формальная верификация/Model Checking}
+\begin{itemize}
+  \item Формальная верификация позволяет строго формально проверить вашу
+  программу на соответствие определенным требованиям:
+  \begin{itemize}
+    \item на самом деле не программу, а модель вашей программы;
+    \item модель программы может быть построена автоматически;
+    \item построенные автоматически модели, как правило, слишком большие и на
+    них метод не работает;
+    \item требования должны задаваться математической формулой, как правило
+    формулой в одной из темпоральных логик.
+  \end{itemize}
+  \item Формальная верификация работает в критически важных системах
+  \begin{itemize}
+    \item \href{https://ti.arc.nasa.gov/m/tech/rse/publications/papers/ASE00/jpf2-ase.pdf}{Model Checking Programs}
+  \end{itemize}
+\end{itemize}
+\end{frame}
