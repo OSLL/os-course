@@ -1,0 +1,75 @@
+\begin{frame}
+\frametitle{Синхронизация без блокировок}
+\begin{itemize}
+  \item Возможно ли синхронизовывать потоки без блокировки?
+  \begin{itemize}
+    \item в простых случаях да, очевидно, мы можем атомарно обновлять некоторые,
+    переменные используя RMW операции, без всяких блокировок;
+    \item если алгоритмы будут обходиться без взаимного исключения, то и проблем
+    связанных с блокировками не будет;
+    \item впрочем, возможно, будут другие.
+  \end{itemize}
+  \item Что значит без блокировок? Есть три вида гарантий прогресса:
+  \begin{itemize}
+    \item obstruction-free;
+    \item lock-free;
+    \item wait-free.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Obstruction freedom}
+\begin{itemize}
+  \item Алгоритм/структура данных/etc может называться obstruction free если
+  выполняется следующее условие:
+  \begin{itemize}
+    \item если мы останавливаем \emph{любые} потоки кроме одного в
+    \emph{произвольном} месте работы этих потоков;
+    \item то оставшийся поток гарантированно достигнет прогресса (завершит
+    операцию над разделяемыми данными).
+  \end{itemize}
+  \item Если потоки используют взаимное исключение, то они не obstruction-free:
+  \begin{itemize}
+    \item если остановить поток когда он держит блокировку, то другие потоки не
+    смогут прогрессировать.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Lock freedom}
+\begin{itemize}
+  \item Алгоритм/структура данных/etc может называться lock free если
+  выполняется следующее условие:
+  \begin{itemize}
+    \item \emph{один из потоков} гарантированно прогрессирует, независимо от
+    состояния дургих;
+    \item т. е. даже если мы начнем останавливать случайные потоки в случайных
+    местах их исполнения, один из оставшихся обязательно достигнет прогресса.
+  \end{itemize}
+  \item Lock freedom сильнее obstruction freedom:
+  \begin{itemize}
+    \item obstruction freedom гарантирует прогресс только если дать одному из
+    потоков исполняться мнонпольно достаточно долго;
+    \item lock freedom гарантирует, что какой-то из потоков точно прогрессирует,    возможно, за счет неудачи других потоков.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Wait freedom}
+\begin{itemize}
+  \item Алгоритм/структура данных/etc может называться wait free если
+  выполняется следующее условие:
+  \begin{itemize}
+    \item каждый поток гарантированно достигает прогресса за ограниченное
+    количество шагов, независимо от других потоков.
+  \end{itemize}
+  \item Wait freedom сильнее lock freedom:
+  \begin{itemize}
+    \item lock freedom гарантирует прогресс как минимум одного потока, а wait
+    freedom гарантирует прогресс всех потоков.
+  \end{itemize}
+\end{itemize}
+\end{frame}
