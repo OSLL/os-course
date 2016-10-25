@@ -121,7 +121,7 @@ struct spinlock {
 
 void lock(struct spinlock *lock)
 {
-  const unsigned ticket = atomic_fet_add_explicit(&lock->next, 1,
+  const unsigned ticket = atomic_fetch_add_explicit(&lock->next, 1,
                             memory_order_relaxed);
 
   while (atomic_load_explicit(&lock->current,
@@ -202,12 +202,14 @@ void unlock(struct spinlock *lock, struct node *self)
 {
   struct node *tail = self, *next;
 
-  if (atomic_compare_exchange_strong_explicit(&lock->tail, &tail, 0,
-        memory_order_release, memory_order_relaxed))
-    return;
+  if (!(next = atomic_load_explicit(&self->next, memory_order_relaxed))) {
+    if (atomic_compare_exchange_strong_explicit(&lock->tail, &tail, 0,
+          memory_order_release, memory_order_relaxed))
+      return;
 
-  while (!(next = atomic_load_explicit(&self->next,
-                    memory_order_relaxed)));
+    while (!(next = atomic_load_explicit(&self->next,
+                      memory_order_relaxed)));
+  }
   atomic_store_explicit(&next->wait, 0, memory_order_release);
 }
 \end{lstlisting}
