@@ -24,6 +24,15 @@
   numbers=left
 }
 
+\lstdefinestyle{base}{
+  frame=single,
+  breaklines=true,
+  basicstyle=\tiny,
+  postbreak=\raisebox{0ex}{\ensuremath{\hookrightarrow\space}},
+  moredelim=[is][\color{red}]{@}{@},
+  numbers=left
+}
+
 \MakePerPage{footnote}
 
 \title{Operating Systems}
@@ -38,6 +47,7 @@
 
   \input{problems}
   \input{lockless}
+  \input{stack}
 
   \begin{frame}
   \begin{center}

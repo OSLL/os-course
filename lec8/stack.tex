@@ -1,0 +1,152 @@
+\begin{frame}[fragile]
+\frametitle{Пример: lock-free stack}
+\begin{lstlisting}
+#include <stdatomic.h>
+#include <assert.h>
+
+struct stack_node {
+	struct stack_node *next;
+};
+
+struct stack {
+	struct stack_node * _Atomic top;
+};
+
+void stack_setup(struct stack *stack)
+{
+	atomic_store(&stack->top, NULL);
+}
+
+void stack_release(struct stack *stack)
+{
+	assert(!atomic_load(&stack->top));
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример: lock-free stack}
+\begin{lstlisting}
+void stack_push(struct stack *stack, struct stack_node *node)
+{
+	struct stack_node *next = atomic_load_explicit(&stack->top,
+				memory_order_relaxed);
+
+	do {
+		node->next = next;
+	} while (!atomic_compare_exchange_strong_explicit(&stack->top,
+				/* expected value = */&next,
+				/* new value = */node,
+				memory_order_release,
+				memory_order_relaxed));
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример: lock-free stack}
+\begin{lstlisting}
+struct stack_node *stack_pop(struct stack *stack)
+{
+	struct stack_node *top = atomic_load_explicit(&stack->top,
+				memory_order_consume);
+	struct stack_node *next;
+
+	do {
+		if (!top)
+			break;
+		next = top->next;
+	} while (!atomic_compare_exchange_strong_explicit(&stack->top,
+				/* expected value = */&top,
+				/* new value = */next,
+				memory_order_consume,
+				memory_order_consume));
+	return top;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}
+\frametitle{Пример: lock-free stack}
+\begin{itemize}
+  \item Наш простой lock-free stack очень примечателен тем, что он содержит
+  почти все lock-free характерные ошибки, которые можно было бы совершить:
+  \begin{itemize}
+    \item использование чужой/освобожденной памяти;
+    \item проблема ABA.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{lock-free stack: протухший указатель}
+\begin{lstlisting}[style=base]
+struct stack_node *stack_pop(struct stack *stack)
+{
+	struct stack_node *top = atomic_load_explicit(&stack->top,
+				memory_order_consume);
+	struct stack_node *next;
+
+	do {
+		if (!top)
+			break;
+
+		@/* top might have been freed by this time */@
+		@next = top->next;@
+
+	} while (!atomic_compare_exchange_strong_explicit(&stack->top,
+				/* expected value = */&top,
+				/* new value = */next,
+				memory_order_consume,
+				memory_order_consume));
+	return top;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{lock-free stack: проблема ABA}
+\begin{lstlisting}[style=base]
+struct stack_node *stack_pop(struct stack *stack)
+{
+	struct stack_node *top = atomic_load_explicit(&stack->top,
+				memory_order_consume);
+	struct stack_node *next;
+
+	do {
+		if (!top)
+			break;
+		next = top->next;
+
+	@/* CAS operation successful if stack->top is equal to top@
+	@ * but does it mean that stack->top->next is equal to next? */@
+	@} while (!atomic_compare_exchange_strong_explicit(&stack->top,@
+				@/* expected value = */&top,@
+				@/* new value = */next,@
+				@memory_order_consume,@
+				@memory_order_consume));@
+	return top;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}
+\frametitle{Управление памятью в lock-free алгоритмах}
+\begin{itemize}
+  \item Для решения проблем работы с памятью есть несколько распространенных
+  стратегий:
+  \begin{itemize}
+    \item использовать GC, в JVM таких проблем не возникает;
+    \item использовать один из SMR (Safe Memory Reclamation) алгоритмов:
+    \begin{itemize}
+      \item Hazard Pointers;
+      \item Read Copy Update.
+    \end{itemize}
+  \end{itemize}
+  \item Существуют и другие варианты:
+  \begin{itemize}
+    \item использовать lock-free счетчики ссылок - не просто и медленно;
+    \item использовать freelist и указатели с тегами - не практично.
+  \end{itemize}
+\end{itemize}
+\end{frame}
