@@ -113,7 +113,7 @@ static struct mem_pool *mem_pool_create(struct mem_cache *cache)
 		return 0;
 
 	const uintptr_t addr = page_addr(page); 
-	struct mem_pool *meta = (struct mem_pool *)(addr + cache->meta_offs);
+	struct mem_pool *meta = va(addr + cache->meta_offs);
 
 	for (int i = 0; i != 1 << cache->pool_order; ++i) {
 		page_set_bit(&page[i], PAGE_CACHE_BIT);
@@ -121,7 +121,7 @@ static struct mem_pool *mem_pool_create(struct mem_cache *cache)
 	}
 
 	meta->page = page;
-	meta->data = (void *)addr;
+	meta->data = va(addr);
 	meta->free = cache->obj_count;
 	mem_pool_bitmap_setup(cache, meta);
 
@@ -139,7 +139,7 @@ static void mem_pool_destroy(struct mem_cache *cache, struct mem_pool *pool)
 		page[i].u.cache = 0;
 	}
 
-	page_free((uintptr_t)pool->data, cache->pool_order);
+	__page_free(page, cache->pool_order);
 }
 
 void mem_cache_setup(struct mem_cache *cache, size_t size, size_t align)
@@ -300,4 +300,121 @@ void mem_cache_free(struct mem_cache *cache, void *ptr)
 		list_del(&pool->ll);
 		list_add(&pool->ll, &cache->free_pools);
 	}
+}
+
+
+#define MEM_POOLS	(sizeof(mem_pool_size) / sizeof(mem_pool_size[0]))
+
+static size_t mem_pool_size[] = {
+	64,   128,  192,  256,  320,  384,  448,
+	512,  576,  640,  704,  768,  832,  896,
+	960,  1024, 1152, 1280, 1408, 1536, 1664,
+	1792, 1920, 2048, 2304, 2560, 2816, 3072,
+	3584, 4096, 5120, 6144, 7168, 8192
+};
+static struct mem_cache mem_pool[MEM_POOLS];
+
+static struct mem_cache *mem_pool_lookup(size_t size)
+{
+	for (int i = 0; i != MEM_POOLS; ++i)
+		if (mem_pool_size[i] >= size)
+			return &mem_pool[i];
+	return 0;
+}
+
+static int mem_order_calculate(size_t size)
+{
+	int order;
+
+	for (order = 0; order != MAX_ORDER + 1; ++order)
+		if (((size_t)1 << (order + PAGE_SHIFT)) >= size)
+			break;
+	return order;
+}
+
+void mem_alloc_setup(void)
+{
+	for (int i = 0; i != MEM_POOLS; ++i) {
+		const size_t size = mem_pool_size[i];
+		const size_t align = mem_pool_size[0];
+
+		mem_cache_setup(&mem_pool[i], size, align);
+	}
+}
+
+void mem_alloc_shrink(void)
+{
+	for (int i = 0; i != MEM_POOLS; ++i)
+		mem_cache_shrink(&mem_pool[i]);
+}
+
+void *mem_alloc(size_t size)
+{
+	struct mem_cache *cache = mem_pool_lookup(size);
+
+	if (cache)
+		return mem_cache_alloc(cache);
+
+	const int order = mem_order_calculate(size);
+	struct page *page = __page_alloc(order);
+
+	if (!page)
+		return 0;
+
+	page_clear_bit(page, PAGE_CACHE_BIT);
+	page->u.order = order;
+
+	return va(page_addr(page));
+}
+
+void mem_free(void *ptr)
+{
+	if (!ptr)
+		return;
+
+	struct page *page = addr_page(pa(ptr) & ~(uintptr_t)PAGE_MASK);
+
+	if (page_test_bit(page, PAGE_CACHE_BIT)) {
+		mem_cache_free(page->u.cache, ptr);
+		return;
+	}
+
+	const int order = page->u.order;
+	const uintptr_t mask = (1ull << (order + PAGE_SHIFT)) - 1;
+
+	page_clear_bit(page, PAGE_CACHE_BIT);
+	page->u.order = 0;
+	page_free((~mask & pa(ptr)), order);
+}
+
+void *mem_realloc(void *ptr, size_t size)
+{
+	if (!ptr)
+		return mem_alloc(size);
+
+	struct page *page = addr_page(pa(ptr) & ~(uintptr_t)PAGE_MASK);
+	size_t old_size;
+
+	if (page_test_bit(page, PAGE_CACHE_BIT)) {
+		struct mem_cache *cache = page->u.cache;
+
+		old_size = cache->obj_size;
+		if (old_size >= size)
+			return ptr;
+	} else {
+		const int order = page->u.order;
+
+		old_size = (size_t)1 << (PAGE_SHIFT + order);
+		if (old_size >= size)
+			return ptr;
+	}
+
+	void *new = mem_alloc(size);
+
+	if (!new)
+		return 0;
+
+	memcpy(new, ptr, old_size);
+	mem_free(ptr);
+	return new;
 }

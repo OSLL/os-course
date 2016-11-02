@@ -32,4 +32,10 @@ void mem_cache_release(struct mem_cache *cache);
 void *mem_cache_alloc(struct mem_cache *cache);
 void mem_cache_free(struct mem_cache *cache, void *ptr);
 
+void mem_alloc_setup(void);
+void mem_alloc_shrink(void);
+void *mem_alloc(size_t size);
+void *mem_realloc(void *ptr, size_t size);
+void mem_free(void *ptr);
+
 #endif /*__ALLOC_H__*/

@@ -2,6 +2,7 @@
 #include <memory.h>
 #include <balloc.h>
 #include <paging.h>
+#include <alloc.h>
 #include <ints.h>
 #include <time.h>
 
@@ -24,6 +25,7 @@ void main(void *bootstrap_info)
 	balloc_setup(bootstrap_info);
 	paging_setup();
 	page_alloc_setup();
+	mem_alloc_setup();
 	enable_ints();
 
 	while (1);
