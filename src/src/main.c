@@ -17,6 +17,34 @@ static void qemu_gdb_hang(void)
 #endif
 }
 
+static void test_kmap(void)
+{
+	const size_t count = 1024;
+	struct page **pages = mem_alloc(sizeof(*pages) * count);
+	size_t i;
+
+	BUG_ON(!pages);
+	for (i = 0; i != count; ++i) {
+		pages[i] = __page_alloc(0);
+		if (!pages[i])
+			break;
+	}
+
+	char *ptr = kmap(pages, i);
+
+	BUG_ON(!ptr);
+	BUG_ON((uintptr_t)ptr < HIGHER_BASE);
+
+	for (size_t j = 0; j != i * PAGE_SIZE; ++j)
+		ptr[i] = 13;
+
+	for (size_t j = 0; j != i * PAGE_SIZE; ++j)
+		BUG_ON(ptr[i] != 13);
+
+	kunmap(ptr);
+	mem_free(pages);
+}
+
 static void test_alloc(void)
 {
 	struct list_head head;
@@ -114,11 +142,15 @@ void main(void *bootstrap_info)
 	paging_setup();
 	page_alloc_setup();
 	mem_alloc_setup();
+	kmap_setup();
 	enable_ints();
 
+	printf("Tests Begin\n");
 	test_buddy();
 	test_slab();
 	test_alloc();
+	test_kmap();
+	printf("Tests Finished\n");
 
 	while (1);
 }
