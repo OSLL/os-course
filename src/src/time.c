@@ -43,8 +43,6 @@ static void pit_handler(int irq, struct frame *frame)
 {
 	(void) irq;
 	(void) frame;
-
-	printf("tick!\n");
 }
 
 void time_setup(void)
