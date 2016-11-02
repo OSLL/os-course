@@ -55,6 +55,7 @@ stack_top:
 
 1:
 	movl $stack_top, %esp
+	pushl %ebx
 	pushl %eax
 	call videomem_clrscr
 	popl %eax
@@ -89,6 +90,7 @@ stack_top:
 	call videomem_puts
 	addl $4, %esp
 
+	popl %ebx
 	lidt idt_ptr
 	lgdt gdt_ptr
 	movw $0x10, %ax
@@ -223,6 +225,11 @@ start64:
 	lgdt gdt_ptr64
 	movabsq $bootstrap_stack_top, %rax
 	movq %rax, %rsp
+
+	/* ebx is 32-bit long, while we use 64-bit long address,
+	 * make sure that higher 32 bits don't contain garbage. */
+	xorq %rdi, %rdi
+	movl %ebx, %edi
 
 	cld
 	movabsq $main, %rax
