@@ -35,7 +35,8 @@ static void idt_entry_setup(struct idt_entry *entry, uint16_t selector,
 
 static void unexpected_interrupt(struct frame *frame)
 {
-	printf("Unexpected interrupt %d\n", (int)frame->intno);
+	printf("Unexpected interrupt %d at 0x%lx\n", (int)frame->intno,
+				frame->rip);
 	printf("Backtrace Begin:\n");
 	__backtrace(frame->rbp, stack_begin(), stack_end());
 	printf("Backtrace End.\n");
