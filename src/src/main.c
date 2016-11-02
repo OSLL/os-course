@@ -1,5 +1,6 @@
 #include <serial.h>
 #include <balloc.h>
+#include <paging.h>
 #include <ints.h>
 #include <time.h>
 
@@ -20,6 +21,7 @@ void main(void *bootstrap_info)
 	ints_setup();
 	time_setup();
 	balloc_setup(bootstrap_info);
+	paging_setup();
 	enable_ints();
 
 	while (1);
