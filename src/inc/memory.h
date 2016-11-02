@@ -23,10 +23,15 @@ static inline void *va(uintptr_t phys)
 static inline uintptr_t pa(const void *virt)
 { return (uintptr_t)virt - HIGHER_BASE; }
 
+struct mem_cache;
+
 struct page {
 	struct list_head ll;
 	unsigned long flags;
-	int order;
+	union {
+		int order;
+		struct mem_cache *cache;
+	} u;
 };
 
 struct page_alloc_zone {
