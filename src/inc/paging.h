@@ -20,4 +20,11 @@ typedef uint64_t pte_t;
 
 void paging_setup(void);
 
+
+struct page;
+
+void *kmap(struct page **pages, size_t count);
+void kunmap(void *ptr);
+void kmap_setup(void);
+
 #endif /*__PAGING_H__*/
