@@ -1,0 +1,44 @@
+\begin{frame}
+\frametitle{Назначение IPC}
+\begin{itemize}
+  \item Потоки vs процессы:
+  \begin{itemize}
+    \item потоки одного процесса разделяют все ресурсы - они зависимы;
+    \item потоки разных процессов не разделяют ресурсов по-умолчанию.
+  \end{itemize}
+  \item Процессы по-умолчанию надежны:
+  \begin{itemize}
+    \item при правильном дизайне падение одного процесса не потревожит другой;
+    \item упавший процесс всегда можно перезапустить.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Назначение IPC}
+\begin{itemize}
+  \item Процессам приходится взаимодействовать:
+  \begin{itemize}
+    \item чтобы выполнять общую задачу необходимо взаимодействовать;
+    \item чтобы иметь доступ к общим ресурсам необходима синхронизация.
+  \end{itemize}
+  \item IPC - набор примитивов для взаимодействия процессов:
+  \begin{itemize}
+    \item обмен сообщениями;
+    \item синхронизация.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Виды IPC}
+\begin{itemize}
+  \item Виды IPC определяются ОС и ее архитектуры:
+  \begin{itemize}
+    \item классические UNIX IPC;
+    \item невнятные Windows IPC;
+    \item L4 IPC (в каком-то смысле тоже классические).
+  \end{itemize}
+  \item Мы будем рассматривать классические UNIX IPC.
+\end{itemize}
+\end{frame}

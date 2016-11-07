@@ -1,0 +1,84 @@
+\begin{frame}
+\frametitle{Сигналы}
+\begin{itemize}
+  \item Сигналы - это сообщения, которые получает процесс в некоторых
+  предвиденных и не очень случаях:
+  \begin{itemize}
+    \item кто-то послал процессу сигнал с помощью вызова kill (говорящее
+    название);
+    \item процесс сам себе послал сигнал с помощью вызова abort (опять же
+    говорящее название);
+    \item процесс сделал какую-то гадость:
+    \begin{itemize}
+      \item доступ к не своей/не существующей/не выровненной памяти;
+      \item попытка выполнить недопустимую инструкцию;
+    \end{itemize}
+    \item другие менее/более противные ситуации.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Сигналы}
+\begin{itemize}
+  \item При получении сигнала процесс (или скорее от имени процесса) выполняется
+  некоторое действие:
+  \begin{itemize}
+    \item типичные действия - проигнорировать сигнал, упасть или упасть красиво
+    с core dump-ом;
+    \item для некоторых типов сигналов действия можно переопределить: например
+    мы можем перехватить CTRL+C.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример}
+\lstinputlisting[firstline=18,lastline=40,language=C]{src/sigaction/sigaction.c}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример}
+\lstinputlisting[firstline=7,lastline=16,language=C]{src/sigaction/sigaction.c}
+\end{frame}
+
+\begin{frame}
+\frametitle{Ограничения на обработку сигналов}
+\begin{itemize}
+  \item Обработчики сигналов вызываются асинхронно (в некотором смысле)
+  относительно кода потока:
+  \begin{itemize}
+    \item не все функции можно безопасно вызывать из обработчика сигнала;
+    \item например, printf нельзя, по крайней мере так говорит POSIX.
+  \end{itemize}
+  \item POSIX требует чтобы довольно много функций были signal-safe
+  \begin{itemize}
+    \item но разные библиотеки и ОС позволяют себе всякие вольности;
+    \item например, glibc разрешает longjmp из обработчика сигнала - можно
+    использовать, чтобы реализовать потоки на уровне приложения, а не ОС.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Блокировка сигналов}
+\begin{itemize}
+  \item Некоторые сигналы можно блокировать
+  \begin{itemize}
+    \item сигнал не будет доставлен процессу пока его не разблокируют.
+  \end{itemize}
+  \item Для блокировки сигналов рекомендуется использовать sigprocmask
+  \begin{itemize}
+    \item функция принимает битовую маску и действие (например,
+    заблокировать все сигналы в маске, или разблокировать).
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример}
+\lstinputlisting[firstline=8,lastline=16,language=C]
+{src/sigprocmask/sigprocmask.c}
+\lstinputlisting[firstline=20,lastline=23,language=C]
+{src/sigprocmask/sigprocmask.c}
+\end{frame}

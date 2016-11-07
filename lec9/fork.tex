@@ -1,0 +1,17 @@
+\begin{frame}
+\frametitle{Создание процесса}
+\begin{itemize}
+  \item fork - вызов создающий почти точную \emph{копию} процесса:
+  \begin{itemize}
+    \item новый процесс имет свой уникальный идентификатор;
+    \item в новом процессе будет копия только одного исходного потока (того что
+    вызвал fork);
+    \item есть некоторые тонкости с открытыми файлоыми дескрипторами.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример}
+\lstinputlisting[language=C]{src/fork/fork.c}
+\end{frame}

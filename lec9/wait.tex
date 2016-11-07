@@ -1,0 +1,41 @@
+\begin{frame}
+\frametitle{Завершение процессов}
+\begin{itemize}
+  \item Завершение процесса состоит из двух частей:
+  \begin{itemize}
+    \item процесс должен завершиться или совершить ошибку;
+    \item другой процесс должен дождаться пока процесс завершиться.
+  \end{itemize}
+  \item Чтобы завершиться процесс может вызвать exit или \_exit:
+  \begin{itemize}
+    \item как аргумент принимается некоторый код возврата;
+    \item return из main за сценой приводит к вызову exit.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{wait}
+\begin{itemize}
+  \item Чтобы дождаться завершения процесс может воспользоваться wait или
+  waitpid:
+  \begin{itemize}
+    \item до тех пор пока кто-то не вызовет wait/waitpid процесс находится в
+    состоянии \emph{zombie} - не жив и не мертв;
+    \item зачастую wait вызывает процесс-родитель;
+    \item если родитель умер, то ребенка усыновит/удочерит/etc другой процесс
+    системы.
+  \end{itemize}
+  \item waitpid на самом деле дожидается не завершения процесса, а изменения его
+  состояния:
+  \begin{itemize}
+    \item процессмы могу не только умирать, но и "останавливаться" и
+    "продолжать".
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример}
+\lstinputlisting[firstline=18,lastline=30,language=C]{src/wait/wait.c}
+\end{frame}
