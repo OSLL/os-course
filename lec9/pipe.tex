@@ -1,0 +1,41 @@
+\begin{frame}
+\frametitle{Каналы (Pipes)}
+\begin{itemize}
+  \item Сигналы и коды возврата не позволяют передавать произвольные данные
+  \begin{itemize}
+    \item память у каждого процесса своя по-умолчанию;
+    \item не пригодны для передачи данных - нет возможности обмениваться
+    данными.
+  \end{itemize}
+  \item Для передачи данных между процессами UNIX IPC предоставляет много
+  способов:
+  \begin{itemize}
+    \item можно создать участок общей памяти разделяемый процессами;
+    \item сокеты - зачастую сеть, но есть специальные UNIX сокеты;
+    \item файлы - можно читать/писать одни и те же файлы;
+    \item каналы.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Каналы}
+\begin{itemize}
+  \item pipe - это пара файловых дескрипторов:
+  \begin{itemize}
+    \item один дескриптор можно использовать для записи;
+    \item другой дескриптор можно использовать для чтения, того что было
+    записано в первый;
+    \item pipe имеет ограниченный буффер, так что записать в pipe не блокируясь
+    произвольное количество данных не получится;
+    \item pipe не сохраняет границы сообщений (по-умолчанию).
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример}
+\lstinputlisting[firstline=9,lastline=14,language=C]{src/pipe/pipe.c}
+\lstinputlisting[firstline=26,lastline=30,language=C]{src/pipe/pipe.c}
+\lstinputlisting[firstline=32,lastline=33,language=C]{src/pipe/pipe.c}
+\end{frame}
