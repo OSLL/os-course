@@ -1,0 +1,33 @@
+\begin{frame}
+\frametitle{Process Trace (ptrace)}
+\begin{itemize}
+  \item Process Trace - не совсем IPC:
+  \begin{itemize}
+    \item ptrace позволяет оожному процессу отслеживать другой процесс;
+    \item отслеживать состояние его памяти и регистров;
+    \item менять состояние его памяти и регистров;
+    \item т. е. ptrace нарушает изоляцию процессов.
+  \end{itemize}
+  \item Зачем нам нарушать изолцию процессов?
+  \begin{itemize}
+    \item очевидно, что это нужно для отладки;
+    \item обычно кто попало не может отслеживать другой процесс.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример}
+\lstinputlisting[firstline=52,lastline=70,language=C]{src/ptrace/trace.c}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример}
+\lstinputlisting[firstline=72,lastline=76,language=C]{src/ptrace/trace.c}
+\lstinputlisting[firstline=77,lastline=96,language=C]{src/ptrace/trace.c}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример}
+\lstinputlisting[firstline=13,lastline=29,language=C]{src/ptrace/trace.c}
+\end{frame}
