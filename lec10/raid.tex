@@ -49,7 +49,7 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{RAID 1}
+\frametitle{RAID}
 \framesubtitle{Mirroring}
 \begin{itemize}
   \item Самый очевидный способ повысить надежность - простое дублирование:
@@ -72,7 +72,7 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{RAID 2}
+\frametitle{RAID}
 \framesubtitle{Parity}
 \begin{center}
   \includegraphics[width=.8\linewidth]{parity.png}
@@ -116,7 +116,7 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{RAID 2}
+\frametitle{RAID}
 \framesubtitle{Generalized Parity}
 \[
   \left(
@@ -155,7 +155,7 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{RAID 2}
+\frametitle{RAID}
 \begin{itemize}
   \item В общем случае нужную систему уравнений нам дают коды Хэмминга:
   \begin{itemize}
@@ -167,13 +167,41 @@
   \item Недостатки:
   \begin{itemize}
     \item нужно сравнительно много дисков, чтобы получить какой-то выигрыш по
-    сравнению с RAID 1 нужно как минимум 7 дисков;
+    сравнению с Mirroring нужно как минимум 7 дисков;
     \item запись происходит со скоростью самого медленного диска.
   \end{itemize}
   \item Достоинства:
   \begin{itemize}
     \item дополнительные расходы дискового пространства уменьшаются
     экспоненциально.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Финальные замечания про RAID-ы}
+\begin{itemize}
+  \item Мы предполагали, что диски могут выходить из строя целиком
+  \begin{itemize}
+    \item если диск вышел из строя целиком, то это легко обнаржить, т. е. мы
+    всегда знаем где ошибка;
+    \item что если диск все еще работает, но некоторые данные на нем
+    испортились?
+    \item добавим к каждой порции данных на диске контрольную сумму (хеш).
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Финальные замечания про RAID-ы}
+\begin{itemize}
+  \item Мы рассмотрели возможность исправления 1 или 2 ошибок, при условии, что
+  мы знаем где эти ошибки произошли
+  \begin{itemize}
+    \item в общем случае можно построить код позволяющий исправить любое
+    количество ошибок;
+    \item например, коды Боуза-Чоудхури-Хоквингема в общем и коды Рида-Соломона
+    как частный случай.
   \end{itemize}
 \end{itemize}
 \end{frame}
