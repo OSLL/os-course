@@ -351,3 +351,21 @@
   \includegraphics[width=.8\linewidth]{btree42.png}
 \end{center}
 \end{frame}
+
+\begin{frame}
+\frametitle{Параллельная работа с B+ деревьями}
+\begin{itemize}
+  \item Естественно ФС могут обрабатывать несколько запросов параллельно
+  \begin{itemize}
+    \item деревья традиционно считаются очень недружественными структурами
+    по отношению к параллельной обработке;
+    \item все потоки должны пройти через корень, для которого может
+    потребоваться синхронизация - корень узкое место.
+  \end{itemize}
+  \item Для B+ деревьев существуют неплохие схемы блокировок
+  \begin{itemize}
+    \item классический вариант (B-link деревья) описан в статье Лемана и Яо;
+    \item Efficient locking for concurrent operations on B-trees.
+  \end{itemize}
+\end{itemize}
+\end{frame}
