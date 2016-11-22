@@ -128,7 +128,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -363,7 +363,7 @@
          sodipodi:role="line"
          id="tspan4649"
          x="522.48438"
-         y="1020.5343">Key 4 &lt; x &lt; Inf</tspan></text>
+         y="1020.5343">Key 4 &lt;= x &lt; Inf</tspan></text>
     <path
        style="fill:#00a0ff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 127.2071,929.86218 -109.999993,110.00002 209.999993,0 z"
