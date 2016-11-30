@@ -1,0 +1,134 @@
+\begin{frame}
+\frametitle{Исполняемые файлы}
+\begin{itemize}
+  \item Ядро ОС само по себе не очень полезно - пользователи имеют дело с
+  прикладными приложениями
+  \begin{itemize}
+    \item соответственно, для полноценной ОС желательно уметь загружать и
+    запускать программы.
+  \end{itemize}
+  \item Программы представляются как один или несколько исполняемых файлов:
+  \begin{itemize}
+    \item скрипты с аттрибутом +x и \#\! в начала файла;
+    \item ELF файлы (опять же с аттрибутом +x);
+    \item PE/COM файлы (это в Windows);
+    \item Mach-O (это в Mac OS).
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Бинарные исполняемые файлы}
+\begin{itemize}
+  \item Бинарный исполняемый файл содержит:
+  \begin{itemize}
+    \item код и данные необходимые для выполнения;
+    \item ссылки на другие бинарные файлы (разделяемые библиотеки);
+    \item может содержать отладочную информацию.
+  \end{itemize}
+  \item Бинарный исполняемый файл определяет
+  \begin{itemize}
+    \item где в памяти должны располагаться данные и код;
+    \item где находится точка входа в программу (условно, адрес main).
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Формат ELF}
+\begin{columns}
+  \begin{column}{.36\linewidth}
+    \begin{lstlisting}
+struct elf_hdr {
+    uint8_t e_ident[ELF_NIDENT];
+    uint16_t e_type;
+    uint16_t e_machine;
+    uint32_t e_version;
+    uint64_t e_entry;
+    uint64_t e_phoff;
+    uint64_t e_shoff;
+    uint32_t e_flags;
+    uint16_t e_ehsize;
+    uint16_t e_phentsize;
+    uint16_t e_phnum;
+    uint16_t e_shentsize;
+    uint16_t e_shnum;
+    uint16_t e_shstrndx;
+} __attribute__((packed));
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.65\linewidth}
+    \begin{itemize}
+      \item ELF файл начинается с заголовка с общей информацией;
+      \item тип, версия, архитектура - ОС должна проверить файл на валидность;
+      \item адрес точки входа так же хранится здесь - \emph{e\_entry}.
+    \end{itemize}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Program Header}
+\begin{itemize}
+  \item Program Header, упрощенно, описывает участок памяти который должна
+  подготовить ОС
+  \begin{itemize}
+    \item все Program Header-ы хранятся в таблице в ELF файле;
+    \item при загрузке ELF файла, ОС должна прочитать эту таблицу и подготовить
+    участки памяти.
+  \end{itemize}
+  \item Таблица Program Header-ов:
+  \begin{itemize}
+    \item смещение таблицы в файле хранится в поле \emph{e\_phoff};
+    \item количество записей в таблице хранится в поле \emph{e\_phnum};
+    \item размер каждой записи хранится в поле \emph{e\_phentsize}.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Program Header для x86}
+\begin{columns}
+  \begin{column}{.65\linewidth}
+    \begin{itemize}
+      \item \emph{p\_type} - тип заголовка (на интересует только
+      \emph{PT\_LOAD} == 1);
+      \item \emph{p\_vaddr} и \emph{p\_memsz} - адрес и размер в памяти;
+      \item \emph{p\_offset} и \emph{p\_filesz} - смещение и размер в файле
+      данных, которые нужно загрузить в память;
+      \item \emph{p\_filesz} может быть меньше \emph{p\_memsz}, хвост должен
+      быть заполнен нулями.
+    \end{itemize}
+  \end{column}
+  \begin{column}{.36\linewidth}
+    \begin{lstlisting}
+struct elf_phdr {
+    uint32_t p_type;
+    uint32_t p_flags;
+    uint64_t p_offset;
+    uint64_t p_vaddr;
+    uint64_t p_paddr;
+    uint64_t p_filesz;
+    uint64_t p_memsz;
+    uint64_t p_align;
+} __attribute__((packed));
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Загрузка ELF файла}
+\begin{itemize}
+  \item Таким образом загрузка ELF файла в простом случае состоит из следующих
+  действий:
+  \begin{itemize}
+    \item проверяем заголовок ELF файла - что это ELF файл для нужной
+    архитектуры;
+    \item читаем таблицу Program Header-ов аллоцируем память и подготавливаем
+    таблицу страниц для всех Program Header-ов с типом \emph{PT\_LOAD};
+    \item передаем управление точке входа с переключением процессора в
+    непривелигированный режим работы.
+  \end{itemize}
+\end{itemize}
+\end{frame}
