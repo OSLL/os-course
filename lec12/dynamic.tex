@@ -1,0 +1,201 @@
+\begin{frame}
+\frametitle{Библиотеки}
+\begin{itemize}
+  \item Библиотеки позволяют переиспользовать код (зачастую без перекомпиляции):
+  \begin{itemize}
+    \item библиотеки можно организовывать разными способами, например:
+    \begin{itemize}
+      \item статические библиотеки - просто наборы объектных файлов, которые
+      можно слинковать с вашей программой;
+      \item динамические библиотеки подключаются во время работы программы.
+    \end{itemize}
+  \end{itemize}
+  \item Преимущества динамических библиотек:
+  \begin{itemize}
+    \item не нужно хранить один и тот же код в нескольких экземплярах (в отличие
+    от статических библиотек);
+    \item можно избежать дублирования одного и того же кода в памяти (загрузить
+    динамическую библиотеку в единственном экземпляре на все программы).
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Динамические библиотеки}
+\begin{itemize}
+  \item Динамическая библиотека может быть загружена по любому адресу:
+  \begin{itemize}
+    \item почему мы не можем зафиксировать адрес?
+    \item исполняемый файл не может заранее знать адреса функций и данных из
+    библиотеки;
+    \item сама библиотека не может знать адреса своих функций и данных заранее.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Position Independent Code (PIC)}
+\begin{itemize}
+  \item В момент сборки мы можем не знать абсолютные адреса функций/переменных,
+  но мы можем знать относительные:
+  \begin{itemize}
+    \item функция которую мы хотим вызвать находится на \emph{x} байт выше/ниже
+    текущей инструкции (значения регистра RIP);
+    \item аналогично для данных.
+  \end{itemize}
+  \item PIC решает проблему обращения к функциям и переменным внутри
+  динамической библиотеки
+  \begin{itemize}
+    \item если библиотека зависит от другой библиотеки - у нас все еще проблемы;
+    \item программам/библиотекам зависящим от нас это не помогает.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Динамический компоновщик}
+\begin{itemize}
+  \item Динамический компоновщик решает ту же задачу, что и обычнй, но в других
+  условиях
+  \begin{itemize}
+    \item в ELF файле может быть специальный Program Header с типом
+    \emph{PT\_INTERP == 3} - он указывает на путь к динамическому компоновщику;
+    \item вместе с имполняемым файлом ОС загружает динамический компоновщик
+    \emph{и передает ему управление}.
+  \end{itemize}
+  \item Динамический компоновщик загружает нужные динамические библиотеки
+  \begin{itemize}
+    \item информация о необходимых библиотеках хранится в месте, на которое
+    указывает Program Header \emph{PT\_DYNAMIC};
+    \item т. е. в момент сборки мы должны знать обо всех библиотеках, от
+    которых мы зависим.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Редактирование связей}
+\begin{itemize}
+  \item Динамический компоновщик нашел и загрузил все библиотеки в память, что
+  дальше?
+  \begin{itemize}
+    \item теперь ему известны адреса всех нужных функций и переменных;
+    \item он может подредактировать память и проставить в нужных местах ссылки.
+  \end{itemize}
+  \item Нужное место - Global Offset Table (GOT):
+  \begin{itemize}
+    \item по сути, таблица адресов всех объектов, к которым нам нужно
+    обращаться;
+    \item динамический компоновщик зная адреса просто заполняет GOT.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример}
+\begin{columns}
+  \begin{column}{.3\linewidth}
+    \begin{lstlisting}
+int bar;
+
+void foo(void)
+{ ++bar; }
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.6\linewidth}
+    \begin{lstlisting}[style=base]
+foo:
+  push   %rbp
+  mov    %rsp,%rbp
+
+  -->mov    0x20093d(%rip),%rax // 0x200fd8<--
+  -->mov    (%rax),%eax<--
+  lea    0x1(%rax),%edx
+  mov    0x200931(%rip),%rax
+  mov    %edx,(%rax)
+
+  nop
+  pop    %rbp
+  retq 
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример}
+\begin{itemize}
+  \item Куда указывает \emph{0x200fd8}? Посмотрим с помощью \emph{readelf -S}:
+  \begin{lstlisting}
+[Nr] Name Type     Address Offset Size EntSize Flags Link Info Align
+...
+[19] .got PROGBITS 200fd0  fd0    30   8       WA    0    0    8
+...
+  \end{lstlisting}
+  \begin{itemize}
+    \item динамический компоновщик после загрузки libfoo.so запишет в нужное
+    место .got адрес переменной bar;
+    \item а адрес .got находится с помощью относительной адресации.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример}
+\begin{columns}
+  \begin{column}{.5\linewidth}
+    \begin{lstlisting}[style=base]
+main:
+  push   %rbp
+  mov    %rsp,%rbp
+
+  mov    0x200930(%rip),%eax
+  mov    %eax,%esi
+  mov    $0x4007d4,%edi
+  mov    $0x0,%eax
+  callq  4005d0 <printf@plt>
+
+  -->callq  4005f0 <foo@plt><--
+
+  mov    0x200914(%rip),%eax
+  mov    %eax,%esi
+  mov    $0x4007e6,%edi
+  mov    $0x0,%eax
+  callq  4005d0 <printf@plt>
+
+  mov    $0x0,%eax
+  pop    %rbp
+  retq
+    \end{lstlisting}
+  \end{column}
+  \begin{column}{.4\linewidth}
+    \begin{lstlisting}
+int main(void)
+{
+  printf("bar = %d\n", bar);
+  foo();
+  printf("bar = %d\n", bar);
+  return 0;
+}
+    \end{lstlisting}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Пример}
+\begin{itemize}
+  \item Что за функция \emph{foo@plt}?
+\begin{lstlisting}
+foo@plt:
+  jmpq   *0x200a32(%rip) // 0x601028
+  pushq  $0x2
+  jmpq   4005c0 <_init+0x20>
+\end{lstlisting}
+  \begin{itemize}
+    \item адрес \emph{0x601028} просто ссылается на определенное место в got;
+    \item т. е. foo@plt просто передает управление по адресу записанному в got;
+    \item в конечном итоге, там должен оказаться адрес функции foo.
+  \end{itemize}
+\end{itemize}
+\end{frame}
