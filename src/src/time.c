@@ -39,11 +39,17 @@ static void pit_set_frequency(unsigned long freq)
 	out8(PIT_CH0_DATA, (div >> 8) & 0xff);
 }
 
+static unsigned long long jiffies;
+
 static void pit_handler(int irq, struct frame *frame)
 {
 	(void) irq;
 	(void) frame;
+	++jiffies;
 }
+
+unsigned long long current_time(void)
+{ return jiffies; }
 
 void time_setup(void)
 {
