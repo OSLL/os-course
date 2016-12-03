@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <memory.h>
 #include <list.h>
+#include <spinlock.h>
+
 
 struct mem_cache {
 	/* We split all slabs in three sets:
@@ -16,6 +18,8 @@ struct mem_cache {
 	struct list_head free_pools;
 	struct list_head partial_pools;
 	struct list_head busy_pools;
+
+	struct spinlock lock;
 
 	/* struct alloc_pool layout */
 	size_t meta_offs;
