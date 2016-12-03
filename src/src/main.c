@@ -134,19 +134,25 @@ static void test_buddy(void)
 
 static void __th_main(void *data)
 {
-	struct thread *next = data;
+	const int id = (int)(uintptr_t)data;
 
-	printf("switch to %p\n", next);
-	thread_switch_to(next);
+	for (size_t i = 0; i != 5; ++i) {
+		printf("i'm %d\n", id);
+		force_schedule();
+	}
 }
 
 static void test_threads(void)
 {
-	struct thread *th1 = thread_create(&__th_main, thread_current());
-	struct thread *th2 = thread_create(&__th_main, th1);
+	struct thread *th1 = thread_create(&__th_main, (void *)1);
+	struct thread *th2 = thread_create(&__th_main, (void *)2);
 
-	printf("switch to %p\n", th2);
-	thread_switch_to(th2);
+	thread_activate(th1);
+	thread_activate(th2);
+
+	thread_join(th2);
+	thread_join(th1);
+
 	thread_destroy(th1);
 	thread_destroy(th2);
 }
@@ -174,5 +180,5 @@ void main(void *bootstrap_info)
 	test_threads();
 	printf("Tests Finished\n");
 
-	while (1);
+	idle();
 }

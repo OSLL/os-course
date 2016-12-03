@@ -1,5 +1,5 @@
 #include <spinlock.h>
-#include <scheduler.h>
+#include <threads.h>
 #include <ints.h>
 
 void spin_setup(struct spinlock *lock)

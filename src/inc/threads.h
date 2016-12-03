@@ -1,14 +1,20 @@
 #ifndef __THREADS_H__
 #define __THREADS_H__
 
+#include <stdint.h>
+
+#include <list.h>
+
 enum thread_state {
+	THREAD_IDLE,
 	THREAD_ACTIVE,
 	THREAD_BLOCKED,
 	THREAD_FINISHING,
-	THREAD_FINISHED,
+	THREAD_FINISHED
 };
 
 struct thread {
+	struct list_head ll;
 	enum thread_state state;
 	unsigned long long time;
 	struct page *stack;
@@ -26,10 +32,13 @@ void thread_activate(struct thread *thread);
 void thread_join(struct thread *thread);
 void thread_exit(void);
 
-void thread_switch_to(struct thread *next);
+void disable_preempt(void);
+void enable_preempt(void);
+
+void schedule(void);
+void force_schedule(void);
+void idle(void);
 
 void threads_setup(void);
-
-static inline void schedule(void) {}
 
 #endif /*__THREADS_H__*/
