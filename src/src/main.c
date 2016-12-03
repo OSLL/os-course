@@ -7,6 +7,7 @@
 #include <print.h>
 #include <ints.h>
 #include <time.h>
+#include <threads.h>
 
 static void qemu_gdb_hang(void)
 {
@@ -131,6 +132,25 @@ static void test_buddy(void)
 	}
 }
 
+static void __th_main(void *data)
+{
+	struct thread *next = data;
+
+	printf("switch to %p\n", next);
+	thread_switch_to(next);
+}
+
+static void test_threads(void)
+{
+	struct thread *th1 = thread_create(&__th_main, thread_current());
+	struct thread *th2 = thread_create(&__th_main, th1);
+
+	printf("switch to %p\n", th2);
+	thread_switch_to(th2);
+	thread_destroy(th1);
+	thread_destroy(th2);
+}
+
 void main(void *bootstrap_info)
 {
 	qemu_gdb_hang();
@@ -143,6 +163,7 @@ void main(void *bootstrap_info)
 	page_alloc_setup();
 	mem_alloc_setup();
 	kmap_setup();
+	threads_setup();
 	enable_ints();
 
 	printf("Tests Begin\n");
@@ -150,6 +171,7 @@ void main(void *bootstrap_info)
 	test_slab();
 	test_alloc();
 	test_kmap();
+	test_threads();
 	printf("Tests Finished\n");
 
 	while (1);
